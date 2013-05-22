@@ -1,0 +1,25 @@
+<?php 
+	$controllername = $request->getControllerName();
+	$controlleraction = $request->getActionName();
+?>
+<div class="well" id="leftcolumn">
+	<div id="button">
+    	<h2 id="quicklink">Quick Links</h2>
+        <ul class="nav nav-tabs nav-stacked leftnav" id="leftnav">
+        <?php if(isAdmin()){ ?>
+        	<li><a href="<?php echo $this->baseUrl('profile/list'); ?>"><i class="icon-list icon-white"></i> Customer Directory</a></li>
+            <li><a href="<?php echo $this->baseUrl('merchant/list'); ?>"><i class="icon-list icon-white"></i> Merchants For Approval</a></li>
+            <li><a href="<?php echo $this->baseUrl('merchant/list'); ?>"><i class="icon-list icon-white"></i> Merchant Directory</a></li>
+            <li><a href="#" class="" id=""><i class="icon-list icon-white"></i> Link 1</a></li>
+			<li><a href="#" class="" id=""><i class="icon-list icon-white"></i> Link 2</a></li>
+            <li><a href="#" class="" id=""><i class="icon-list icon-white"></i> Link 3</a></li>
+        <?php } else { ?>
+        	<li><a href="#" class="" id=""><i class="icon-list icon-white"></i> Link 1</a></li>
+			<li><a href="#" class="" id=""><i class="icon-list icon-white"></i> Link 2</a></li>
+            <li><a href="#" class="" id=""><i class="icon-list icon-white"></i> Link 3</a></li>
+            <li><a href="#" class="" id=""><i class="icon-list icon-white"></i> Link 4</a></li>
+            <li><a href="#" class="" id=""><i class="icon-list icon-white"></i> Link 5</a></li>
+        <?php } ?>
+        </ul>
+    </div>
+</div>

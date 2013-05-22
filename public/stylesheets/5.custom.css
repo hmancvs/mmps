@@ -1,0 +1,93 @@
+/* Plugin Styles */
+
+/* Jquery stepy styles */
+.button-back { float: left; }
+.button-next, .finish { float: right; }
+.button-back, .button-next, .finish {
+	/*border: 1px solid #C9C4BA; color: #7F0055; cursor: pointer; font: 10px verdana; padding: 3px 10px; text-decoration: none;
+	-khtml-border-radius: 3px; -moz-border-radius: 3px; -opera-border-radius: 3px; -webkit-border-radius: 3px; border-radius: 3px;*/
+	margin-bottom: 20px; margin-right: 10px;
+}
+.button-back {
+	margin-left: 10px;
+}
+.step {
+	border: 1px solid #DDD; clear: left; width: 100%;
+	-khtml-border-radius: 3px; -moz-border-radius: 3px; -opera-border-radius: 3px; -webkit-border-radius: 3px; border-radius: 3px;
+}
+/*.step label { color: #444; display: block; font: bold 10px verdana; margin: 10px 0 3px 7px; }*/
+/*.step legend { color: #4080BF; font: bold 14px verdana; padding: 0 2px 3px 2px; }*/
+/*.step input, .step textarea, .step select { border: 1px solid #AAA; font: 10px verdana; margin-left: 7px; }*/
+
+.stepy-titles { list-style: none; margin: 0 0 0 15px; padding: 0; width: 100%; }
+.stepy-titles li { color: #DDD; cursor: pointer; font: bold 16px verdana; float: left; padding: 10px 60px 10px 10px; }
+.stepy-titles li span { font: 11px verdana; display: block; }
+.stepy-titles .current-step { color: #369; cursor: auto; }
+
+/* Jquery tipsy styles */
+.tipsy { font-size: 11px; position: absolute; padding: 5px; z-index: 100000; margin-left:10px; width:190px;}
+.tipsy-inner { background-color: #000; color: #FFF; max-width: 200px; padding: 5px 8px 4px 8px; text-align: left;
+	border: 3px solid #959FA9;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	border-radius: 3px;
+	background-color: #F9F9F9;
+	color: #454545;
+	font-weight: normal;
+	font-family: serif;
+}
+.tipsy-inner label {
+	display:block;
+	padding: 5px;
+	width: 170px;
+	margin:-4px 0 0 -6px;
+	border-bottom-width: 0;
+	color: white;
+	background: #3A79B8;
+	background-image: -moz-linear-gradient(top, #3A79B8, #56AADE);
+	background-image: -webkit-gradient(linear, left top, left bottom, from(#3A79B8), to(#56AADE));
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=#3A79B8,endColorstr=#56AADE);
+	-ms-filter: "progid:DXImageTransform.Microsoft.gradient(startColorstr=#3A79B8,endColorstr=#56AADE)";
+}
+/* Rounded corners */
+.tipsy-inner { border-radius: 3px; -moz-border-radius: 3px; -webkit-border-radius: 3px; }
+
+/* Uncomment for shadow */
+/*.tipsy-inner { box-shadow: 0 0 5px #000000; -webkit-box-shadow: 0 0 5px #000000; -moz-box-shadow: 0 0 5px #000000; }*/
+
+.tipsy-arrow { position: absolute; width: 0; height: 0; line-height: 0; border: 5px dashed #3A79B8; }
+
+/* Rules to colour arrows */
+.tipsy-arrow-n { border-bottom-color: #3A79B8; }
+.tipsy-arrow-s { border-top-color: #3A79B8; }
+.tipsy-arrow-e { border-left-color: #3A79B8; }
+.tipsy-arrow-w { border-right-color: #3A79B8; }
+
+.tipsy-n .tipsy-arrow { top: 0px; left: 50%; margin-left: -5px; border-bottom-style: solid; border-top: none; border-left-color: transparent; border-right-color: transparent; }
+.tipsy-nw .tipsy-arrow { top: 0; left: 10px; border-bottom-style: solid; border-top: none; border-left-color: transparent; border-right-color: transparent;}
+.tipsy-ne .tipsy-arrow { top: 0; right: 10px; border-bottom-style: solid; border-top: none;  border-left-color: transparent; border-right-color: transparent;}
+.tipsy-s .tipsy-arrow { bottom: 0; left: 50%; margin-left: -5px; border-top-style: solid; border-bottom: none;  border-left-color: transparent; border-right-color: transparent; }
+.tipsy-sw .tipsy-arrow { bottom: 0; left: 10px; border-top-style: solid; border-bottom: none;  border-left-color: transparent; border-right-color: transparent; }
+.tipsy-se .tipsy-arrow { bottom: 0; right: 10px; border-top-style: solid; border-bottom: none; border-left-color: transparent; border-right-color: transparent; }
+.tipsy-e .tipsy-arrow { right: 0; top: 50%; margin-top: -5px; border-left-style: solid; border-right: none; border-top-color: transparent; border-bottom-color: transparent; }
+.tipsy-w .tipsy-arrow { left: 0; top: 50%; margin-top: -5px; border-right-style: solid; border-left: none; border-top-color: transparent; border-bottom-color: transparent; }
+
+
+#el01 {padding:0} /* Remove padding */
+#el02 { /* Text and background colour, blue on light gray */
+color:#00f;
+background-color:#ddd
+}
+#el03 {background:url(/i/icon-info.gif) no-repeat 100% 50%} /* Background image */
+#el04 {border-width:6px} /* Border width */
+#el05 {border:2px dotted #00f} /* Border width, style and colour */
+#el06 {border:none} /* No border */
+#el07 {font-family:"Courier New",Courier} /* Different font */
+#el08 {font-size:2em} /* Bigger text */
+#el09 {font-size:0.5em} /* Smaller text */
+#el10 {font-weight:bold} /* Bold text */
+#el11 {padding:2em} /* Increase padding */
+#el12 {text-align:right} /* Change text alignment */
+fieldset p {margin:0} /* Remove margins from p elements inside fieldsets */
+
+/* @end */

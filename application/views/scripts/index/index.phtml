@@ -1,0 +1,56 @@
+<?php 
+	require_once APPLICATION_PATH.'/includes/header.php';
+
+	$title = 'Welcome to '.$this->translate("companyname");
+	
+	$this->headMeta()->appendName('keywords', '');
+	$this->headMeta()->appendName('description', $title);
+	
+	$this->headTitle($title);  
+	
+?>
+<script>
+$(document).ready(function(){
+	
+});
+</script>
+<style>
+
+body.publicbody {
+	background-color: #fcfcfc;
+	background-image: url("<?php echo $this->baseUrl('images/homefeature.png'); ?>");
+	background-repeat:repeat-x;
+	background-position:0 21px;
+}
+body.publicbody {
+	background:none;	
+	background: url("<?php echo $this->baseUrl('images/body_bg.png'); ?>") repeat scroll 0 0 #F6F6F6;
+}
+body.publicbody #contentwrapper {
+	background:none;
+}
+body.publicbody #contentcolumn {
+	min-height:400px;
+	clear:both;
+	height:auto;
+}
+</style>
+<div class="row margin0" style="height:auto;">
+	<div id="homeleft" style="margin-right:2px; float:left; width:62%;">
+    	
+    </div>
+    <div id="homeright" style="float:right; width:37%;">
+    	
+    </div>
+</div>
+<div class="row clear lineblocked" style="height:auto;">
+	<div class="blocked clear"></div>
+    <div id="columnleft" style="height:100%; margin-right:2px; float:left; width:75%;">
+        
+    </div>
+    <div style="height:100%; float:right; width:23%; margin-top:-65px;">
+    </div>
+</div>
+<?php
+	require_once APPLICATION_PATH.'/includes/footer.php';
+?>
