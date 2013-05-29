@@ -132,6 +132,14 @@ ul.footerlinks.connect li span {
         </td>
     </tr>
 </table>
+<script>
+//Use window.load and not document.ready for effective equal heights
+$(window).load(function() {
+	<?php if($showloading){ ?>
+		$('#dvLoading').fadeOut(500);
+	<?php } ?>
+}); 
+</script>
 <?php
 	$session->setVar('newsletter_success', '');
 	$session->setVar('newsletter_error', '');

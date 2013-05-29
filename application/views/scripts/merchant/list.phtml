@@ -1,15 +1,18 @@
 <?php
 	require_once APPLICATION_PATH.'/includes/header.php';
 	
-	$title = "Merchant Directory";	
-	$this->headTitle($title);
-	
 	$searchnames = '';
+	$title = "Merchant Directory";	
+	$listurl = $this->baseUrl('merchant/list');
+	$allowclear = false;
+	
 	if(!isEmptyString($request->firstname)){
 		$searchnames .= $request->firstname;
+		$allowclear = true;
 	}
 	if(!isEmptyString($request->lastname)){
 		$searchnames .= " ".$request->lastname;
+		$allowclear = true;
 	}
 	
 	if (!isEmptyString($request->letter)){
@@ -27,22 +30,45 @@
 	
 	# define the letter to be clicked to ease navigation 
 	$where_query = " WHERE m.id <> '' ";
+	$forapproval = false;
+	$isaproval = $request->pending;
+	if($isaproval == 1){
+		$forapproval = true;
+		$where_query .= " AND (m.`status` = 0) ";
+		$title = "Merchants For Approval";
+		$listurl = $this->baseUrl('merchant/list/pending/1');
+	}
 	
+	if(!isEmptyString($request->status)){
+		$where_query .= " AND (m.`status` = '".$request->status."%') ";
+		$allowclear = true;
+	}
 	if(!isEmptyString($request->firstname)){
 		$where_query .= " AND (m.firstname LIKE '%".$request->firstname."%') ";
+		$allowclear = true;
 	}
 	if(!isEmptyString($request->lastname)){
 		$where_query .= " AND (m.lastname LIKE '%".$request->lastname."%') ";
+		$allowclear = true;
 	}
 	if(!isEmptyString($request->orgname)){
 		$where_query .= " AND (m.orgname LIKE '%".$request->othernames."%') ";
+		$allowclear = true;
 	}
-	
 	if(!isEmptyString($request->letter)){
 		$where_query .= " AND (m.`firstname` LIKE '".$request->letter."%' OR m.`lastname` LIKE '".$request->letter."%' OR m.`orgname` LIKE '".$request->letter."%') ";
+		$allowclear = true;
 	}
 	
-	$listurl = $this->baseUrl('merchant/list');
+	if(!isEmptyString($request->startdate) && isEmptyString($request->enddate) ){
+		$start = date('Y-m-d', strtotime($request->startdate));
+		$where_query .= "  AND (TO_DAYS(m.datecreated) >= TO_DAYS('".$start."'))"; 
+	}
+	if(!isEmptyString($request->startdate) && !isEmptyString($request->enddate) ){
+		$start = date('Y-m-d', strtotime($request->startdate));
+		$end = date('Y-m-d', strtotime($request->enddate));
+		$where_query .= " AND (TO_DAYS(m.datecreated) BETWEEN TO_DAYS('".$start."') AND TO_DAYS('".$end."'))";
+	}
 	
 	$order = trim($request->order);
 	$order_query = " ";
@@ -67,9 +93,9 @@
 	$groupstring = "";
 	
 	$paginate->processPost($request->getParams());
-	$all_results_query = "SELECT m.*  FROM merchant m ".$where_query." ".$paginate->getSearchAndFilterSQL()." GROUP BY m.id ".$order_query;
+	$all_results_query = "SELECT m.*, u.*, m.id as mid, u.id as uid, concat(u.firstname, ' ', u.lastname) as approver, m.type as mtype, m.status as `thestatus`, m.datecreated as mdate, m.firstname as mfirstname, m.lastname as mlastname, m.phone as mphone, m.email as memail, s.name as storename, s.username as storeusername, s.url as storeurl FROM merchant m left join useraccount as u on (m.approvedbyid = u.id) left join store s on (s.merchantid = m.id) ".$where_query." ".$paginate->getSearchAndFilterSQL()." GROUP BY m.id ".$order_query;
 	
-	// debugMessage($all_results_query);
+	// debugMessage($all_results_query); // exit();
 	$paginate->setItemCountFromSQLQuery($all_results_query);
 	$current_results_query = $all_results_query." ".$paginate->getSQLLimit();
 	
@@ -77,6 +103,12 @@
 	$result = $conn->fetchAll($current_results_query);
 	$has_no_data = (count($result) == 0) ? true : false; 
 	
+	
+	if($forapproval){
+		
+	}
+	$this->headTitle($title);
+	$showloading = true;
 ?>
 <script>
 $(document).ready(function() {
@@ -122,9 +154,15 @@ $(document).ready(function() {
 			});  
 		}
 	}
+	
+	var dateofregOpts = datepickerOpts;
+	datepickerOpts.dateFormat = '<?php echo $config->dateandtime->javascriptmediumformat; ?>';
+	// dateofregOpts.maxDate = new Date();
+	$("#startdate, #enddate").datepicker(datepickerOpts);
+	
 }); 
 </script>
-<style>		
+<style>	
 .alert.alert-success {
 	clear:both;
 }
@@ -132,6 +170,9 @@ $(document).ready(function() {
 	font-weight:normal;
 	font-size:14px;
 }
+/*#searchbox label.control-label {
+	display:block;
+}*/
 </style>
 <div>
 	<?php require APPLICATION_PATH."/views/scripts/index/leftcolumn.phtml"; ?>
@@ -140,50 +181,85 @@ $(document).ready(function() {
     	<h1><?php echo $title; ?><?php echo $groupstring; ?></h1>
         <div class="wellcontent" style=" margin-top:-10px;">
             <div class=" blocked clear" style="position:relative; margin-top:25px;">
-            	<div class="advsearch" style="display:block; float:right; text-align:right; position:absolute; right:0; top:10px; width:60px;">
-                    <a href="<?php echo $listurl; ?>" id="reset" class="btn btn-primary btn-mini pull-left" title="Reset list or clear all filters">Reset</a>&nbsp;&nbsp;
-                    
-            	</div>
+            	<div class="makeabsolute" style="right:5px; top:-35px;">
+                	<?php if(isAdmin()){ ?>
+                        <a href="<?php echo $this->baseUrl('merchant/add/pgc/true'); ?>" class="addpopup addmerchant btn btn-primary btn-mini" title="New Merchant" rel="New Merchant" id="newmerchant" formtitle="indexform" successurl="<?php echo $listurl; ?>" action="<?php echo $this->baseUrl("merchant/create"); ?>"><i class="icon-plus icon-white"></i> New Merchant</a>
+                   <?php } ?> 
+                </div>
                 <ul id="searchbox">
                     <li>
                         <a style="padding-left:0; padding-right:0; width:100%;">
                             <table id="directorysearchtable" class="table noborder margin0">
                                 <tr>
-                                    <td style="width:55px; padding-top:6px; padding-left:2px; padding-right:2px;">                                    
-                                       <?php if(isAdmin()){ ?>
-                                       		<a href="<?php echo $this->baseUrl('merchant/add/pgc/true'); ?>" class="addpopup addmerchant btn btn-primary btn-mini" title="New Merchant" rel="New Merchant" id="newmerchant" formtitle="indexform" successurl="<?php echo $listurl; ?>" action="<?php echo $this->baseUrl("merchant/create"); ?>"><i class="icon-plus icon-white"></i> New</a>
-                                       <?php } ?>     
-                                    </td>
-                                    <td style="width:100px; padding-left:4px; padding-right:2px;">
-                                       
-                                    </td>
-                                    <td style="width:185px; padding-left:2px; padding-right:2px;">
-                                        
-                                    </td>
                                     <td style="width:100px; padding-left:2px; padding-right:2px;">
-                                    	<label class="control-label">Ordering:</label>
+                                    	<label class="control-label blocked">Ordering:</label>
                                         <?php
-                                            $allorders = array('1' => 'Latest First', '2'=>'Alphabetical (Firstname)','3'=>'Alphabetical (Lastname)', '4'=>'Earliest First', '5'=>'Alphabetical (Company name)');
+                                            $allorders = array('1' => 'Latest First', '4'=>'Earliest First', '2'=>'Alphabetical (Firstname)','3'=>'Alphabetical (Lastname)', '5'=>'Alphabetical (Company name)');
                                             $ordersdropdown = new Zend_Form_Element_Select('order',
                                                                 array(
                                                                     'multiOptions' => $allorders,
                                                                     'view' => new Zend_View(),
                                                                     'decorators' => array('ViewHelper'),
-                                                                    'class' => array('gender','span2','autofilter'),
-                                                                    'title' => 'Order list by'		
+                                                                    'class' => array('gender','span2','autofilter')
                                                                 )
                                             );  
                                             $ordersdropdown->setValue($request->getParam('order')); 
                                             echo $ordersdropdown->render();
                                         ?>
-                                    </td>                                   
-                                    <td style="padding:31px 3px 0 0; text-align:right;">
-                                        <input type="hidden" name="advanced" id="advanced" value="<?php echo $request->getParam('advanced'); ?>" />
-                                        <input style="width:150px;" name="searchterm" id="searchterm" value="<?php echo $request->searchterm; ?>" type="text" class="input-medium xsearch-query span2 pull-right" placeholder="Search Merchants"></td>
-                                    <td style="padding:31px 3px 0 0; text-align:left;">
-                                        <button type="submit" id="searchbutton" class="btn" style="padding:6px 10px;"><i class="icon-search"></i></button>
-                                        <input type="hidden" name="letter" id="letter" value="<?php echo $request->getParam('letter'); ?>" />
                                     </td>
+                                    <td style="width:85px; padding-left:2px; padding-right:2px;">
+                                        <label class="control-label">Type:</label>
+                                        <?php
+                                            $allvalues = getMerchantType();
+											$dropdown = new Zend_Form_Element_Select('m'.HTML_TABLE_COLUMN_SEPARATOR.'type',
+                                                                array(
+                                                                    'multiOptions' => array_merge_maintain_keys(array('' => 'All'), $allvalues),
+                                                                    'view' => new Zend_View(),
+                                                                    'decorators' => array('ViewHelper'),
+                                                                    'class' => array('type','span2','autofilter')
+                                                                )
+                                            );  
+                                            $dropdown->setValue($request->getParam('m'.HTML_TABLE_COLUMN_SEPARATOR.'type')); 
+                                            echo $dropdown->render();
+                                        ?>
+                                    </td>
+                                    <td style="width:235px; padding-left:2px; padding-right:2px;">
+                                    	<?php if(!$forapproval){ ?>
+                                           <label class="control-label" style="display:block; text-align:left;">Status:</label>
+                                            <?php
+                                                $allstatus = getMerchantApprovalStatus();
+                                                $dropdown = new Zend_Form_Element_Select('status',
+                                                                    array(
+                                                                        'multiOptions' => array_merge_maintain_keys(array('' => 'All'), $allstatus),
+                                                                        'view' => new Zend_View(),
+                                                                        'decorators' => array('ViewHelper'),
+                                                                        'class' => array('status','span2','autofilter')
+                                                                    )
+                                                );  
+                                                $dropdown->setValue($request->getParam('status')); 
+                                                echo $dropdown->render();
+                                            ?>
+                                        <?php } ?>
+                                    </td>
+                                    <td style="padding:31px 3px 0 0; text-align:right;">
+                                    	<div class="makerelative pull-left">
+                                            <input type="hidden" name="advanced" id="advanced" value="<?php echo $request->getParam('advanced'); ?>" />
+                                            <input style="width:175px;" name="searchterm" id="searchterm" value="<?php echo $request->searchterm; ?>" type="text" class="input-medium xsearch-query span2 pull-right" placeholder="Search Merchants">
+                                            <a style="display:block; float:right; text-align:right; position:absolute; right:5px; top:2px;" href="<?php echo $listurl; ?>" title="Reset list or clear all filters" id="reset" class="removeline close button btn" rel="email">&times;</a>
+                                        </div>
+                                        <div class="pull-right">
+                                        	<button type="submit" id="searchbutton" class="btn" style="padding:6px 10px;"><i class="icon-search"></i></button>
+                                        	<input type="hidden" name="letter" id="letter" value="<?php echo $request->getParam('letter'); ?>" />
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2"><label class="control-label">Added From: </label>
+                                      	<input name="startdate"  id="startdate" type="text"  class="datefield startdate width100 autosearch" value="<?php echo $request->startdate; ?>"  /></td>
+                                    <td><label class="control-label">To: </label>
+                                    	<input name="enddate" id="enddate" type="text" class="datefield width100 autosearch"  value="<?php echo $request->enddate; ?>" />
+                                      	<div class="blocked" id="enddate_error"></div></td>
+                                    <td></td>
                                 </tr>
                             </table>
                         </a>
@@ -209,16 +285,20 @@ $(document).ready(function() {
                     <table class="table list" style="">
                         <thead>
                             <tr>
-                                <td style="width:65px;">Actions</td>
+                                <td>Actions <img src="<?php echo $this->baseUrl('images/spacer.gif'); ?>" style="width:85px; height:2px;" /></td>
                                 <td>Type</td>
+                                <?php if(isEmptyString($request->m__type) || $request->m__type == 1){ ?>
                                 <td class="wrapping">Company <img src="<?php echo $this->baseUrl('images/spacer.gif'); ?>" style="width:70px; height:2px;" /></td>
                                 <td class="wrapping">Contact Person <img src="<?php echo $this->baseUrl('images/spacer.gif'); ?>" style="width:25px; height:2px;" /></td>
+                                <?php } ?>
+                                <?php if(isEmptyString($request->m__type) || $request->m__type == 2){ ?>
                                 <td class="wrapping">First Name <img src="<?php echo $this->baseUrl('images/spacer.gif'); ?>" style="width:30px; height:2px;" /></td>
                                 <td class="wrapping">Last Name <img src="<?php echo $this->baseUrl('images/spacer.gif'); ?>" style="width:30px; height:2px;" /></td>
+                                <?php } ?>
                                 <td class="wrapping">Phone</td>
                                 <td class="wrapping">Email <img src="<?php echo $this->baseUrl('images/spacer.gif'); ?>" style="width:10px; height:2px;" /></td>
                                 <td class="wrapping">Store Name <img src="<?php echo $this->baseUrl('images/spacer.gif'); ?>" style="width:50px; height:2px;" /></td>
-                                <td class="wrapping">Store Url <img src="<?php echo $this->baseUrl('images/spacer.gif'); ?>" style="width:170px; height:2px;" /></td>
+                                <td class="wrapping">Store Url <img src="<?php echo $this->baseUrl('images/spacer.gif'); ?>" style="width:220px; height:2px;" /></td>
                                 <td class="wrapping">Date Added <img src="<?php echo $this->baseUrl('images/spacer.gif'); ?>" style="width:30px; height:2px;" /></td>
                                 <td class="wrapping">Status <img src="<?php echo $this->baseUrl('images/spacer.gif'); ?>" style="width:10px; height:2px;" /></td>
                                 <td class="wrapping">Date Approved <img src="<?php echo $this->baseUrl('images/spacer.gif'); ?>" style="width:30px; height:2px;" /></td>
@@ -228,7 +308,7 @@ $(document).ready(function() {
                         <tbody>
                             <?php 				  		
                                 foreach($result as $line){
-                                    $id = $line['id'];	
+                                    $id = $line['mid'];	
                                     $contact = '--';
                                     if(!isEmptyString($line['email'])){
                                         $contact = $line['email'];
@@ -236,26 +316,40 @@ $(document).ready(function() {
                                     if(!isEmptyString($line['email']) && !isEmptyString($line['phone'])){
                                         $contact = $line['email'].'<br />'.getShortPhone($line['phone']);
                                     }
-                                    
+									$merchantname = $line['mtype'] == 1 ? $line['orgname'] : $line['mfirstname'].' '.$line['mlastname'];
+									$storename =  $line['storename'];
+									$storeusername =  $line['storeusername'];
+									$storeurl =  $line['storeurl'];
+                                    // debugMessage($line['status'])
                             ?>
                                 <tr>
                                     <td class="centeralign">
-                                    	<!--<a href="<?php //echo $this->baseUrl('merchant/index/id/'.encode($id)); ?>" title="Update"><i class="icon-pencil"></i></a>&nbsp;-->
-                                        <a class="blocked maxwidth maxheight" href="<?php echo $this->baseUrl('merchant/view/id/'.encode($id)); ?>" title="View"><i class="icon-info-sign"></i></a>&nbsp;
+                                    	
+                                        <a class="btn btn-mini lineblocked" href="<?php echo $this->baseUrl('merchant/view/id/'.encode($id)); ?>" title="View"><i class="icon-info-sign"></i></a>&nbsp;
+                                        <?php if(!$isaproval){ ?>
+                                        <a class="btn btn-mini lineblocked" href="<?php echo $this->baseUrl('merchant/index/id/'.encode($id)); ?>" title="Update"><i class="icon-pencil"></i></a>&nbsp;
+                                        <?php } ?>
+                                        <?php if($isaproval){ ?>
+                                        <a class="btn btn-mini lineblocked approve" theid="<?php echo $id; ?>" action="<?php echo $this->baseUrl('merchant/approve/id/'.encode($id).'/status/1/successurl/'.encode($listurl)); ?>" href="javascript:doNothing();" title="Approve" merchant="<?php echo $merchantname; ?>"><i class="icon-ok"></i></a>&nbsp;
+                                        <?php } ?>
                                     </td>
                                     <td><?php echo $line['type'] == 1 ? 'Company' : 'Person'; ?></td>
+                                    <?php if(isEmptyString($request->m__type) || $request->m__type == 1){ ?>
                                     <td class="nowrapping"><?php echo isEmptyString($line['orgname']) ? '--' : $line['orgname']; ?></td>
                                     <td><?php echo isEmptyString($line['contactperson']) ? '--' : $line['contactperson']; ?></td>
-                                    <td><?php echo isEmptyString($line['firstname']) ? '--' : $line['firstname']; ?></td>
-                                    <td><?php echo isEmptyString($line['lastname']) ? '--' : $line['lastname']; ?></td>
-                                    <td><?php echo isEmptyString($line['phone']) ? '--' : getShortPhone($line['phone']); ?></td>
-                                    <td><?php echo isEmptyString($line['email']) ? '--' : $line['email']; ?></td>
-                                    <td>--<?php // echo isEmptyString($storename) ? '--' : $storename; ?></td>
-                                    <td>--<?php // echo isEmptyString($storeurl) ? '--' : $storeurl; ?></td>
-                                    <td><?php echo date('d/m/Y H:i', strtotime($line['datecreated'])); ?></td>
-                                    <td><?php echo getMerchantStatus($line['status']); ?></td>
-                                    <td><?php echo isEmptyString($line['dateapproved']) ? '--' : $line['dateapproved']; ?></td>
-                                    <td><?php echo isEmptyString($line['approvedbyid']) ? '--' : $line['approvedbyid']; ?></td>
+                                    <?php } ?>
+                                    <?php if(isEmptyString($request->m__type) || $request->m__type == 2){ ?>
+                                    <td><?php echo isEmptyString($line['mfirstname']) ? '--' : $line['mfirstname']; ?></td>
+                                    <td><?php echo isEmptyString($line['mlastname']) ? '--' : $line['mlastname']; ?></td>
+                                    <?php } ?>
+                                    <td><?php echo isEmptyString($line['mphone']) ? '--' : getShortPhone($line['mphone']); ?></td>
+                                    <td><?php echo isEmptyString($line['memail']) ? '--' : $line['memail']; ?></td>
+                                    <td><?php echo isEmptyString($storename) ? '--' : $storename; ?></td>
+                                    <td><?php echo isEmptyString($storeurl) ? '--' : '<a href="javascript:doNothing();" title="'.$storename.'">'.$storeurl.'</a>'; ?></td>
+                                    <td><?php echo date('d/m/Y H:i', strtotime($line['mdate'])); ?></td>
+                                    <td><?php echo getMerchantApprovalStatus($line['thestatus']); ?></td>
+                                    <td><?php echo isEmptyString($line['dateapproved']) ? '--' : date('d/m/Y H:i', strtotime($line['dateapproved'])); ?></td>
+                                    <td><?php echo isEmptyString($line['approvedbyid']) ? '--' : $line['approver']; ?></td>
                                 </tr>
                             <?php } ?>
                         </tbody>

@@ -295,40 +295,57 @@ $(document).ready(function() {
             <?php } ?>
         	</form> 
         </div>
-        <div id="contacts">
-            <h2>TBD</h2>
-            <form id="profileform-contacts" class="form-horizontal contacts">
-                <?php if($request->tab == 'contacts'){ ?>
-                <div class="row" style="margin-left:0px;">
-                	<?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
-                        <div class="alert alert-success"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
+        <?php if(isSubscriber()){ ?>
+            <div id="contacts">
+                <h2>Payment History</h2>
+                <form id="profileform-contacts" class="form-horizontal contacts">
+                    <?php if($request->tab == 'contacts'){ ?>
+                    <div class="row" style="margin-left:0px;">
+                        <?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
+                            <div class="alert alert-success"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
+                        <?php } ?>
+                        
+                    </div>
                     <?php } ?>
+                </form>
+            </div>
+            <div id="personal">
+                <h2>My Downloads</h2>
+                <form id="profileform-personal" class="form-horizontal personal">
+                    <?php if($request->tab == 'personal'){ ?>
+                    <?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
+                        <div class="alert alert-success"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
+                    <?php } ?>  
+                    <div class="row" style="margin-left:0px;">
                     
-                </div>
-                <?php } ?>
-            </form>
-        </div>
-        <div id="personal">
-            <h2>TBD</h2>
-            <form id="profileform-personal" class="form-horizontal personal">
-            	<?php if($request->tab == 'personal'){ ?>
-                <?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
-                    <div class="alert alert-success"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
-                <?php } ?>  
-                <div class="row" style="margin-left:0px;">
-                
-                </div>
-                <?php } ?>
-            </form>   	
-        </div>
-        <div id="farm">
-        	<h2>TBD</h2>
-            <form id="profileform-farm" class="form-horizontal farm">
-                <?php if($request->tab == 'farm'){ ?>
-            		
-            	<?php } ?>
-            </form>
-        </div>
+                    </div>
+                    <?php } ?>
+                </form>   	
+            </div>
+            <div id="farm">
+                <h2>Watch List</h2>
+                <form id="profileform-farm" class="form-horizontal farm">
+                    <?php if($request->tab == 'farm'){ ?>
+                        
+                    <?php } ?>
+                </form>
+            </div>
+        <?php } ?>
+        <?php if(isMerchant()){ ?>
+        	<div id="contacts">
+                <h2>My Store</h2>
+                <form id="profileform-contacts" class="form-horizontal contacts">
+                    <?php if($request->tab == 'contacts'){ ?>
+                    <div class="row" style="margin-left:0px;">
+                        <?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
+                            <div class="alert alert-success"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
+                        <?php } ?>
+                        
+                    </div>
+                    <?php } ?>
+                </form>
+            </div>
+        <?php } ?>    
         <?php require APPLICATION_PATH."/views/scripts/profile/settings.phtml"; ?>
     </div> 
 </div>

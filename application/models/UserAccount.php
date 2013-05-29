@@ -32,6 +32,11 @@ class UserAccount extends BaseEntity {
 		$this->hasColumn('securityanswer', 'integer', null);
 		$this->hasColumn('bio', 'string', 1000);
 		$this->hasColumn('profilephoto', 'string', 50);
+		$this->hasColumn('merchantid', 'integer', null);
+		$this->hasColumn('isinvited', 'integer', null, array('default' => 0));
+		$this->hasColumn('invitedbyid', 'integer', null);
+		$this->hasColumn('hasacceptedinvite', 'integer', null, array('default' => 0));
+		$this->hasColumn('dateinvited','date');
 		
 		# override the not null and not blank properties for the createdby column in the BaseEntity
 		$this->hasColumn('createdby', 'integer', 11);
@@ -84,6 +89,18 @@ class UserAccount extends BaseEntity {
 								'foreign' => 'userid'
 							)
 					);
+		$this->hasOne('Merchant as merchant', 
+								array(
+									'local' => 'merchantid',
+									'foreign' => 'id'
+								)
+						);
+		$this->hasOne('UserAccount as invitedby', 
+								array(
+									'local' => 'invitedbyid',
+									'foreign' => 'id',
+								)
+						);
 	}
 	/**
 	 * Custom model validation
@@ -92,9 +109,9 @@ class UserAccount extends BaseEntity {
 		# execute the column validation 
 		parent::validate();
 		// debugMessage($this->toArray(true));
-		/*if($this->usernameExists()){
-			$this->getErrorStack()->add("username.unique", sprintf($this->translate->_("useraccount_username_unique_error"), $this->getUsername()));
-		}*/
+		if($this->isMerchant() && $this->getMerchant()->usernameExists()){
+			$this->getErrorStack()->add("username.unique", sprintf($this->translate->_("useraccount_username_unique_error"), $this->getMerchant()->getStore()->getUsername()));
+		}
 		if($this->emailExists()){
 			$this->getErrorStack()->add("email.unique", sprintf($this->translate->_("useraccount_email_unique_error"), $this->getEmail()));
 		}
@@ -104,7 +121,7 @@ class UserAccount extends BaseEntity {
 			$this->getErrorStack()->add("phone.unique", sprintf($this->translate->_("useraccount_phone_unique_error"), getShortPhone($phone)));
 		}
 		if(!isEmptyString($phone2) && $this->phoneExists($phone2)){
-			$this->getErrorStack()->add("phone.unique", sprintf($this->translate->_("useraccount_phone_unique_error"), getShortPhone($phone2)));
+			// $this->getErrorStack()->add("phone.unique", sprintf($this->translate->_("useraccount_phone_unique_error"), getShortPhone($phone2)));
 		}
 		if(!isEmptyString($phone2) && $phone2 == $phone){
 			$this->getErrorStack()->add("phone.unique", 'Phone Numbers cannot be the same');
@@ -119,14 +136,14 @@ class UserAccount extends BaseEntity {
 		$conn = Doctrine_Manager::connection();
 		# validate unique username and email
 		$id_check = "";
-		if(!isEmptyString($this->getID())){
-			$id_check = " AND id <> '".$this->getID()."' ";
+		if(!isEmptyString($this->getMerchantID())){
+			$id_check = " AND merchantid <> '".$this->getMerchantID()."' ";
 		}
 		
 		if(isEmptyString($username)){
-			$username = $this->getUsername();
+			$username = $this->getMerchant()->getStore()->getUsername();
 		}
-		$query = "SELECT id FROM useraccount WHERE username = '".$username."' AND username <> '' ".$id_check;
+		$query = "SELECT id FROM store WHERE username = '".$username."' AND username <> '' ".$id_check;
 		// debugMessage($query);
 		$result = $conn->fetchOne($query);
 		// debugMessage($result);
@@ -165,7 +182,7 @@ class UserAccount extends BaseEntity {
 		}
 		
 		# unique phone
-		$phone_query = "SELECT u.id FROM useraccount as u WHERE (u.phone = '".$phone."' OR u.phone2 = '".$phone."') ".$id_check;
+		$phone_query = "SELECT u.id FROM useraccount as u WHERE (u.phone = '".$phone."') ".$id_check;
 		// debugMessage($phone_query);
 		$result = $conn->fetchOne($phone_query);
 		// debugMessage($result);
@@ -213,7 +230,18 @@ class UserAccount extends BaseEntity {
 		if(isArrayKeyAnEmptyString('phone2_isactivated', $formvalues)){
 			unset($formvalues['phone2_isactivated']); 
 		}
-		
+		if(isArrayKeyAnEmptyString('merchantid', $formvalues)){
+			unset($formvalues['merchantid']); 
+		}
+		if(isArrayKeyAnEmptyString('isinvited', $formvalues)){
+			unset($formvalues['isinvited']);
+		}
+		if(isArrayKeyAnEmptyString('hasacceptedinvite', $formvalues)){
+			unset($formvalues['hasacceptedinvite']); 
+		}
+		if(isArrayKeyAnEmptyString('dateinvited', $formvalues)){
+			unset($formvalues['dateinvited']); 
+		}
 		# move the data from $formvalues['usergroups_groupid'] into $formvalues['usergroups'] array
 		# the key for each group has to be the groupid
 		if (array_key_exists('usergroups_groupid', $formvalues)) {
@@ -258,7 +286,7 @@ class UserAccount extends BaseEntity {
 			$formvalues['addresses'] = $address;
 		}
 		
-		// debugMessage($formvalues); exit();
+		// debugMessage($formvalues); // exit();
 		parent::processPost($formvalues);
 	}
 	/*
@@ -273,11 +301,19 @@ class UserAccount extends BaseEntity {
 			# initial save
 			$this->save();
 			
+			$ismerchant = false;
+			if(!isEmptyString($this->getMerchantID())){
+				$ismerchant = true;
+			}
 			# update the ids on the profiles
 			$this->setCreatedBy($this->getID());
 			# set activation key
 			$this->setActivationKey($this->generateActivationKey());
 			// $this->setPhoneActivationKey($this->getActivationKey());
+			if($ismerchant){
+				$this->getMerchant()->setCreatedBy($this->getID());
+				$this->getMerchant()->getStore()->setCreatedBy($this->getID());
+			}
 			
 			# save current profile changes
 			$this->save();
@@ -562,6 +598,14 @@ class UserAccount extends BaseEntity {
 		$viewurl = $template->serverUrl($template->baseUrl('signup/activate/id/'.encode($this->getID())."/actkey/".$this->getActivationKey()."/")); 
 		$template->assign('activationurl', $viewurl);
 		
+		// set email content depending on type
+		if($this->isSubscriber()){
+			$template->assign('usertype', 2);
+		}
+		if($this->isMerchant()){
+			$template->assign('usertype', 3);
+		}
+		
 		$mail->clearRecipients();
 		$mail->clearSubject();
 		$mail->setBodyHtml('');
@@ -576,7 +620,41 @@ class UserAccount extends BaseEntity {
 		# render the view as the body of the email
 		$mail->setBodyHtml($template->render('signupnotification.phtml'));
 		// debugMessage($template->render('signupnotification.phtml')); // exit();
-		$message_contents = $template->render('signupnotification.phtml');
+		$mail->send();
+		
+		$mail->clearRecipients();
+		$mail->clearSubject();
+		$mail->setBodyHtml('');
+		$mail->clearFrom();
+		
+		return true;
+	}
+	# send approval notification to merchant
+	function sendMerchantApprovalNotification() {
+		$template = new EmailTemplate(); 
+		# create mail object
+		$mail = getMailInstance(); 
+
+		# assign values
+		$template->assign('firstname', $this->getFirstName());
+		$viewurl = $template->serverUrl($template->baseUrl('signup/index/profileid/'.encode($this->getID())."/actkey/".$this->getActivationKey()."/"));
+		$template->assign('activationurl', $viewurl);
+		
+		// set email content depending on type
+		$mail->clearRecipients();
+		$mail->clearSubject();
+		$mail->setBodyHtml('');
+		
+		# configure base stuff
+		$mail->addTo($this->getEmail(), $this->getName());
+		# set the send of the email address
+		$subject = "Merchant Account Approved";
+		$mail->setFrom($this->config->notification->emailmessagesender, $this->translate->_('useraccount_email_notificationsender'));
+		
+		$mail->setSubject($subject);
+		# render the view as the body of the email
+		$mail->setBodyHtml($template->render('merchantapprovalnotification.phtml'));
+		// debugMessage($template->render('merchantapprovalnotification.phtml')); // exit();
 		$mail->send();
 		
 		$mail->clearRecipients();
@@ -637,7 +715,7 @@ class UserAccount extends BaseEntity {
 		
 		return true;
 	}
-/**
+	/**
 	 * Send a notification to agent that their account will be approved shortly
 	 * 
 	 * @return bool whether or not the signup notification email has been sent
@@ -735,6 +813,53 @@ class UserAccount extends BaseEntity {
 		// render the view as the body of the email
 		$mail->setBodyHtml($template->render('changeemail_oldnotification.phtml'));
 		// debugMessage($template->render('changeemail_oldnotification.phtml')); //exit();
+		$mail->send();
+		
+		$mail->clearRecipients();
+		$mail->clearSubject();
+		$mail->setBodyHtml('');
+		$mail->clearFrom();
+		
+		return true;
+	}
+	
+	# Send notification to invite person to create an account
+	function sendProfileInvitationNotification($merchantid = '') {
+		$template = new EmailTemplate(); 
+		# create mail object
+		$mail = getMailInstance();
+		$view = new Zend_View(); 
+
+		// assign values
+		$template->assign('firstname', isEmptyString($this->getFirstName()) ? 'Friend' : $this->getFirstName());
+		$template->assign('inviter', isEmptyString($this->getInvitedByID()) ? 'MMPS Admin' : $this->getInvitedBy()->getName() );
+		// the actual url will be built in the view
+		$viewurl = $template->serverUrl($template->baseUrl('signup/index/profile/'.encode($this->getID())."/")); 
+		$template->assign('invitelink', $viewurl);
+		
+		// determine if farm group manager is being invited
+		$template->assign('ismerchantadmin', '0');
+		if(!isEmptyString($merchantid)){
+			$merchant = new Merchant();
+			$merchant->populate($merchantid);
+			$template->assign('ismerchantadmin', '1');
+			$template->assign('merchantname', $merchant->getName());
+			$template->assign('store', $merchant->getStore()->getName());
+		}
+		
+		$mail->clearRecipients();
+		$mail->clearSubject();
+		$mail->setBodyHtml('');
+		
+		// configure base stuff
+		$mail->addTo($this->getEmail(), $this->getName());
+		// set the send of the email address
+		$mail->setFrom($this->config->notification->emailmessagesender, $this->translate->_('useraccount_email_notificationsender'));
+		
+		$mail->setSubject(sprintf($this->translate->_('useraccount_email_subject_invite_merchant'), $this->translate->_('appname')));
+		// render the view as the body of the email
+		$mail->setBodyHtml($template->render('invitenotification.phtml'));
+		//debugMessage($template->render('invitenotification.phtml')); exit();
 		$mail->send();
 		
 		$mail->clearRecipients();
@@ -958,7 +1083,7 @@ class UserAccount extends BaseEntity {
 	}
 	# Determine if user has accepted terms
 	function hasAcceptedTerms(){
-		return $this->getAcceptedTerms() == 1;
+		return $this->getAgreedToTerms() == 1;
 	}
     # Determine if user is active	 
 	function isUserActive() {
@@ -975,6 +1100,21 @@ class UserAccount extends BaseEntity {
 	# determine if is a subscriber
 	function isSubscriber(){
     	return $this->getType() == 2 ? true : false; 
+    }
+	function isCustomer(){
+    	return $this->getType() == 2 ? true : false; 
+    }
+	# determine if is a subscriber
+	function isMerchant(){
+    	return $this->getType() == 3 ? true : false; 
+    }
+ 	# determine if person has not been invited
+    function hasNotBeenInvited() {
+    	return $this->getIsInvited() == 0 ? true : false;
+    }
+	# determine if person has been invited
+    function hasBeenInvited() {
+    	return $this->getIsInvited() == 1 ? true : false;
     }
 	/**
 	 * Return the date of birth 
@@ -1034,12 +1174,9 @@ class UserAccount extends BaseEntity {
 	# determine path to small profile picture
 	function getSmallPicturePath() {
 		$baseUrl = Zend_Controller_Front::getInstance()->getBaseUrl();
-		$path = "";
-		if($this->isMale()){
-			$path = $baseUrl.'/uploads/user_0/avatar/default_small_male.jpg';
-		}  
+		$path = $baseUrl.'/uploads/default/default_small_male.jpg';
 		if($this->isFemale()){
-			$path = $baseUrl.'/uploads/user_0/avatar/default_small_female.jpg'; 
+			$path = $baseUrl.'/uploads/default/default_small_female.jpg'; 
 		}
 		if($this->hasProfileImage()){
 			$path = $baseUrl.'/uploads/user_'.$this->getID().'/avatar/small_'.$this->getProfilePhoto();
@@ -1049,12 +1186,9 @@ class UserAccount extends BaseEntity {
 	# determine path to thumbnail profile picture
 	function getThumbnailPicturePath() {
 		$baseUrl = Zend_Controller_Front::getInstance()->getBaseUrl();
-		$path = "";
-		if($this->isMale()){
-			$path = $baseUrl.'/uploads/user_0/avatar/default_thumbnail_male.jpg';
-		}  
+		$path = $baseUrl.'/uploads/default/default_thumbnail_male.jpg';
 		if($this->isFemale()){
-			$path = $baseUrl.'/uploads/user_0/avatar/default_thumbnail_female.jpg'; 
+			$path = $baseUrl.'/uploads/default/default_thumbnail_female.jpg'; 
 		}
 		if($this->hasProfileImage()){
 			$path = $baseUrl.'/uploads/user_'.$this->getID().'/avatar/thumbnail_'.$this->getProfilePhoto();
@@ -1065,11 +1199,9 @@ class UserAccount extends BaseEntity {
 	function getMediumPicturePath() {
 		$baseUrl = Zend_Controller_Front::getInstance()->getBaseUrl();
 		$path = "";
-		if($this->isMale()){
-			$path = $baseUrl.'/uploads/user_0/avatar/default_medium_male.jpg';
-		}  
+		$path = $baseUrl.'/uploads/default/default_medium_male.jpg';
 		if($this->isFemale()){
-			$path = $baseUrl.'/uploads/user_0/avatar/default_medium_female.jpg'; 
+			$path = $baseUrl.'/uploads/default/default_medium_female.jpg'; 
 		}
 		if($this->hasProfileImage()){
 			$path = $baseUrl.'/uploads/user_'.$this->getID().'/avatar/medium_'.$this->getProfilePhoto();
@@ -1080,12 +1212,9 @@ class UserAccount extends BaseEntity {
 	# determine path to large profile picture
 	function getLargePicturePath() {
 		$baseUrl = Zend_Controller_Front::getInstance()->getBaseUrl();
-		$path = "";
-		if($this->isMale()){
-			$path = $baseUrl.'/uploads/user_0/avatar/default_large_male.jpg';
-		}  
+		$path = $baseUrl.'/uploads/default/default_large_male.jpg';
 		if($this->isFemale()){
-			$path = $baseUrl.'/uploads/user_0/avatar/default_large_female.jpg'; 
+			$path = $baseUrl.'/uploads/default/default_large_female.jpg'; 
 		}
 		if($this->hasProfileImage()){
 			$path = $baseUrl.'/uploads/user_'.$this->getID().'/avatar/large_'.$this->getProfilePhoto();
@@ -1098,9 +1227,9 @@ class UserAccount extends BaseEntity {
 		$formattedphone = getFullPhone($phone);
 		$conn = Doctrine_Manager::connection();
 		$query = "SELECT * from useraccount as u where u.phone = '".$formattedphone."' AND u.password = '".sha1($password)."' ";
-		// debugMessage($query);
+		debugMessage($query);
 		$result = $conn->fetchRow($query);
-		// debugMessage($result);
+		debugMessage($result);
 		return $result;
 	}
 	# check for user using password and phone number

@@ -2,18 +2,10 @@
 
 Dear <?php echo $this->firstname; ?>,<br /><br />
 
-This is to inform you that you have been invited by <b><?php echo $this->inviter; ?></b> to Join <?php echo $this->appname; ?>.<br /><br />
-
-<?php if($this->isfarmgroupmanager == 1){ ?>
-	You have been assigned a managerial role for the <b><?php echo $this->groupname; ?></b> Account and you will be required to carry out the following tasks;<br /><br />
-    - Update the account information to suit the current configuration.<br />
-    - Add new farmers to the group.<br />
-    - To invite the farmers to join  by specifying their email addresses.<br />
-    - Keep track of your farmer's activities.<br /><br />
+<?php if($this->ismerchantadmin == 1){ ?>
+	You have been invited by <b><?php echo $this->inviter; ?></b> to create a Merchant Account on  <?php echo $this->appname; ?>.<br /><br />
+	<?php echo $this->appname; ?> is a simple tool to enable you setup a customised platform for your <b><?php echo $this->store; ?></b> store so as to receive online mobile payments<br /><br />
 <?php } ?>
-
-<?php echo $this->appname; ?> is a simple tool to help farmers know what's happening on their farms. <br />
-Start saving time and money. Ditch the spreadsheets and paper records!<br /><br />
 
 In order to get started, you will have to activate your account first by clicking on link below:<br /><br />
 

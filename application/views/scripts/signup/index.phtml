@@ -1,15 +1,15 @@
 <?php
 	require_once APPLICATION_PATH.'/includes/header.php';
 	
-	$title = $this->translate("profile_pagetitle_signup"); 
-	$pagetile = $this->translate("appname")." | Customer Registration"; 
+	$title = $this->translate("useraccount_pagetitle_signup"); 
+	$pagetile = $this->translate("appname")." | Signup"; 
 	
 	$user = new UserAccount(); 	
 	$posturl = $this->baseUrl("signup/processstep1"); 
 	$button_title = $this->translate("profile_button_signup"); 
 	
 	// set all fields to empty string as default
-	$firstname = ''; $lastname = ''; $gender = 1; $email = ''; $username = ''; $phone = ''; $type = 2; $agreedtoterms = ''; $id = ''; $createdby = 1; $userid = '';
+	$firstname = ''; $lastname = ''; $email = ''; $username = ''; $phone = ''; $type = 2; $agreedtoterms = ''; $id = ''; $createdby = 1; $userid = ''; $orgname = ''; $merchanttype = ''; $category = ''; $storename = ''; $url = ''; $username = '';
 	
 	$dobarray = array();
 	
@@ -17,8 +17,10 @@
 	if ($sessionhaserror) {
 		$formvalues = $session->getVar(FORM_VALUES);
 		// debugMessage($formvalues);
-		$firstname = $formvalues['firstname']; $lastname = $formvalues['lastname']; $gender = $formvalues['gender']; $email = $formvalues['email']; $username = $formvalues['username']; $userid = $formvalues['userid'];
-		$type = $formvalues['type']; $agreedtoterms = $formvalues['agreedtoterms']; $createdby = $formvalues['createdby'];
+		$firstname = $formvalues['firstname']; $lastname = $formvalues['lastname']; $email = $formvalues['email']; $username = $formvalues['username']; $userid = $formvalues['userid']; $type = $formvalues['type']; $agreedtoterms = 1; $createdby = $formvalues['createdby']; 
+		if($type == 3){
+			$orgname = $formvalues['orgname']; $merchanttype = $formvalues['merchanttype']; $category = $formvalues['category']; $storename = $formvalues['storename']; $url = $formvalues['url']; $username = $formvalues['username'];
+		}
 		
 		$phone = $formvalues['phone'];
 		if(!isArrayKeyAnEmptyString('id', $formvalues)){
@@ -26,12 +28,13 @@
 		}
 	}
 	
+	$merchantactivate = false;
 	$id = decode($request->profileid);
 	if(!isEmptyString($id)){
 		$user->populate($id);
 		$firstname = $user->getFirstName();
 		$lastname = $user->getLastName();
-		$username = $user->getUserName(); 
+		
 		// debugMessage($user->toArray());
 		$namestring = explode(' ', $firstname);
 		// debugMessage($namestring);
@@ -41,11 +44,27 @@
 		}
 		
 		$email = $user->getEmail();
-		$userid = $user->getUserID();
+		$userid = $user->getID();
 		$phone = $user->getPhone();
 		
+		$merchant = $user->getMerchant();
+		$store = $merchant->getStore();
+		$username = $store->getUserName();
+		$type = $user->getType();
+		$merchanttype = $merchant->getType();
+		$orgname = $merchant->getOrgName();
+		$category = $merchant->getCategory();
+		$storename = $store->getName();
+		$url = $store->getUrl();
+		
 		$posturl = $this->baseUrl("signup/processinvite"); 
+		$merchantactivate = true;
+		$title = "Merchant Account Activation"; 
 	}
+	
+	$merchant = $user->getMerchant();
+	$store = $merchant->getStore();
+	
 	$this->headTitle($pagetile); 
 	
 ?>
@@ -83,7 +102,6 @@
 		// define the validation rules
 		$("#signupform").validate({		
 			rules: {
-				gender: "required",
 				firstname: {
 					required: true
 				},
@@ -119,11 +137,20 @@
 				code: {
 					required: true,
 					validatecode: true					
-				}
+				},
+				orgname: "required",
+				contactperson: "required",
+				merchanttype: "required",
+				category: "required",
+				storename: "required",
+				username: {
+					required: true, 
+					minlength: 4,
+					maxlength: 15
+				}		
 			}, 
 			// the messages for each of the fields being validated
 			messages: {	
-				gender: "<?php echo $this->translate("profile_gender_error"); ?>",
 				firstname: {
 					"required": "<?php echo $this->translate("profile_firstname_error"); ?>"
 				},
@@ -157,6 +184,16 @@
 				agreedtoterms: "<?php echo $this->translate("profile_agreetoterms_error"); ?>",
 				code: {
 					required: "Enter the letters you see above"
+				},
+				orgname: "<?php echo $this->translate("merchant_company_error"); ?>",
+				contactperson: "<?php echo $this->translate("merchant_contact_error"); ?>",		
+				merchanttype: "<?php echo $this->translate("merchant_type_error"); ?>",
+				category: "<?php echo $this->translate("merchant_category_error"); ?>",
+				storename: "<?php echo $this->translate("merchant_storename_error"); ?>",
+				username: {
+					required: "<?php echo $this->translate("useraccount_username_error"); ?>", 					
+					minlength: "Username must have atleast 4 characters",
+					maxlength: "Username must not exceed 15 characters"
 				}
 			},
 			// custom error positions
@@ -223,39 +260,6 @@
 			this.value = this.value.toLowerCase();
 		});  
 		
-		//when button is clicked  
-        $('#check_phone_availability').click(function(){ 
-			check_phone_availability();  
-        });
-		$('#phone').change(function(){ 
-			check_phone_availability();  
-        });
-		
-		//function to check username availability  
-		function check_profile_availability(){  
-			//get the username
-			var checking_html = 'Checking availability...';   
-			var username = $('#username').val();  
-			if(!isEmptyString(username) && username.length >= 4 && username.length <= 15 && isAlpha(username)){
-				// alert('passed');
-				$('#username_availability_result').html(checking_html); 
-				var userid = '<?php echo $user->getID(); ?>';
-				//use ajax to run the check  
-				$.post("<?php echo $this->baseUrl('signup/checkusername'); ?>", { username: username, userid: userid },  
-					function(result){  
-						//if the result is 1  
-						// alert(result); // return false;
-						if(result == 1){  
-							//show that the username is available
-							$('#username_availability_result').html(username + ' is NOT available!').addClass('alert').addClass('alert-error').removeClass('alert-success'); 
-						} else {  
-							//show that the username is NOT available  
-							$('#username_availability_result').html(username + ' is available').addClass('alert').addClass('alert-success').removeClass('alert-error');
-						}  
-				});   
-			}
-		}  
-		
 		//function to check email availability  
 		function check_email_availability(){  
 			//get the username
@@ -279,6 +283,14 @@
 				});  
 			}
 		}  
+		
+		//when button is clicked  
+        $('#check_phone_availability').click(function(){ 
+			check_phone_availability();  
+        });
+		$('#phone').change(function(){ 
+			check_phone_availability();  
+        });
 		
 		//function to check phone availability  
 		function check_phone_availability(){  
@@ -304,10 +316,107 @@
 			}
 		} 
 		
-		$("#headeractions #loginheader #headersignup").css({'display':'none'});
+		//when button is clicked  
+        $('#check_username_availability').click(function(){ 
+			check_user_availability();  
+        });
+		$('#username').change(function(){ 
+			check_user_availability();  
+        });  
+		$('#username').keyup(function(){
+			this.value = this.value.toLowerCase();
+		});
 		
+		//function to check username availability  
+		function check_user_availability(){  
+			//get the username
+			var checking_html = 'Checking availability...';   
+			var username = $('#username').val();  
+			if(!isEmptyString(username) && username.length >= 4 && username.length <= 15 && isAlpha(username)){
+				// alert('passed');
+				$('#username_availability_result').html(checking_html); 
+				var merchantid = '<?php echo $merchant->getID(); ?>';
+				//use ajax to run the check  
+				$.post("<?php echo $this->baseUrl('signup/checkstoreusername'); ?>", { username: username, merchantid: merchantid},  
+					function(result){  
+						//if the result is 1  
+						// alert(result); // return false;
+						if(result == 1){  
+							//show that the username is available
+							$('#username_availability_result').html(username + ' is NOT available!').addClass('alert').addClass('alert-error').removeClass('alert-success'); 
+						} else {  
+							//show that the username is NOT available  
+							$('#username_availability_result').html(username + ' is available').addClass('alert').addClass('alert-success').removeClass('alert-error');
+						}  
+				});   
+			}
+		} 
+		
+		$("#headeractions #loginheader #headersignup").css({'display':'none'});
 		$("#firstname").focus();
 		
+		var defaulturl = '<?php echo $merchant->getDefaultStore(); ?>';
+		$('#url_pre').html(defaulturl);
+		$('#url_post').html('username');
+		var saveurl = $('#url_pre').html()+$('#url_post').html();
+		$('#url').val(saveurl);
+		$('#username').keyup(function(){
+			var current = $(this).val();
+			$('#url_post').html(current);
+			var saveurl = $('#url_pre').html()+$('#url_post').html();
+			$('#url').val(saveurl);
+		});
+		
+		// signup type
+		<?php if($type == 2){ ?>
+			disableContainerByClass("ismerchant");
+			disableContainerByClass("company");	
+			enableContainerByClass("hideonmerchant");
+		<?php } ?>
+		<?php if($type == 3){ ?>
+			enableContainerByClass("ismerchant");
+			disableContainerByClass("hideonmerchant");
+			<?php if($merchant->isCompany()){ ?>
+				// show the company only fields			
+				disableContainerByClass("person");
+			<?php } ?>
+			//trigger a click action on the selected radio button to enable and disable the approprate fields
+			<?php if($merchant->isPerson()){ ?>
+				// show the person only fields			
+				disableContainerByClass("company");	
+				enableContainerByClass("person");
+			<?php } ?>	
+		<?php } ?>
+		
+		$("#type-2").click(function() {
+			disableContainerByClass("ismerchant");
+			disableContainerByClass("company");	
+			enableContainerByClass("hideonmerchant");
+		});
+		$("#type-3").click(function() {
+			enableContainerByClass("ismerchant");
+			enableContainerByClass("company");
+			disableContainerByClass("hideonmerchant");
+		});	
+		
+		// when the person contact is selected, hide the contact tbody and disable all inputs in it
+		$("#merchanttype").change(function() {
+			var merchanttype = $(this).val();
+			if(merchanttype == "1"){
+				// show the company only fields			
+				disableContainerByClass("person");
+				enableContainerByClass("company");
+			}
+			if(merchanttype == "2"){
+				// show the person only fields			
+				disableContainerByClass("company");	
+				enableContainerByClass("person");
+			} 	
+		});
+		
+		<?php if($merchantactivate){ ?>
+			disableContainerByClass("activatemerchant");	
+		<?php } ?>
 	}); 
 </script>
 <style>
@@ -372,47 +481,110 @@ ul#plans li {
 	font-family:'calibri','Telex',sans-serif;
 	font-size:16px;
 }
+#signupform .table tbody {
+	border:none;
+}
 </style>
 <div class="row margin0 blocked maxwidth">
     <span class="span7 marginleft0 pull-left" style="width:560px;">
         <form class="form-horizontal well" id="signupform" action="<?php echo $posturl; ?>" method="post">
         <?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
-            <div class="alert alert-success"><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
+            <div class="alert alert-success clear blocked"><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
+        <?php } ?>
+        <?php if($sessionhaserror) { ?>
+           	<div class="alert alert-error clear blocked"><?php echo $session->getVar(ERROR_MESSAGE); ?></div>
         <?php } ?>	
-            <fieldset title="Customer Registration" id="account">
+        <?php if($request->actkey == 'valid') { ?>
+       		<div class="alert alert-success clear blocked">Activation code validated. Proceed to set a Password for your Account</div>
+        <?php } ?>
+        <?php if($merchantactivate) { ?>
+       		<div class="alert alert-info clear blocked">In order to complete activation, please set a Password for your account.</div>
+        <?php } ?>
+            <fieldset title="<?php echo $title; ?>" id="account">
                 <legend></legend>
-                <table class="table">
-                   <?php if($sessionhaserror) { ?>
+                <table class="table <?php echo $merchantactivate == true ? 'activatemerchant' : ''; ?>">
                    <tr>
-                        <td colspan="2"><div class="alert alert-error"><?php echo $session->getVar(ERROR_MESSAGE); ?></div></td>
+                        <td colspan="2"><label class="control-label gender">I am a &nbsp;&nbsp;</label>
+                        	 <?php						  
+								  $radio = new Zend_Form_Element_Radio('type',
+										  array(
+												  'multiOptions' => array('2' => 'Paying Customer', '3' => 'Merchant'), 
+												  'view' => new Zend_View(),
+												  'disableLoadDefaultDecorators' => true,
+												  'separator' => '&nbsp;&nbsp;&nbsp;&nbsp;',
+												  'decorators' => array('ViewHelper',
+																	  array('HtmlTag', array('tag' => 'div', 'class' => array('inline', 'radio', 'zendradio'))) // use a sorrounding DIV with classes which are copied to the label by JQuery
+																  )
+										  )
+								  );
+								  $radio->setValue($type);
+								  echo $radio->render();
+							  ?>
+							  <div id="type_error"></div>
+                        </td>
                    </tr>
-                   <?php } ?>
-                   <?php if($request->actkey == 'valid') { ?>
-                   <tr>
-                        <td colspan="2"><div class="alert alert-success">Activation code validated. Proceed to set a Password for your Account</div></td>
-                   </tr>
-                   <?php } ?>
-                   <tr>
-                       <td colspan="2"><label class="control-label gender"><?php echo $this->translate("profile_gender_label"); ?>: <?php echo $this->translate("global_required_field_marker"); ?></label>
-                        <?php						  
-                              $genderradio = new Zend_Form_Element_Radio('gender',
-                                      array(
-                                              'multiOptions' => array('1' => 'Male', '2' => 'Female'), 
-                                              'view' => new Zend_View(),
-                                              'disableLoadDefaultDecorators' => true,
-                                              'separator' => '&nbsp;&nbsp;&nbsp;&nbsp;',
-                                              'decorators' => array('ViewHelper',
-                                                                  array('HtmlTag', array('tag' => 'div', 'class' => array('inline', 'radio', 'zendradio'))) // use a sorrounding DIV with classes which are copied to the label by JQuery
-                                                              )
-                                      )
-                              );
-                              $genderradio->setValue($gender);
-                              echo $genderradio->render();
-                          ?>
-                          <div id="gender_error"></div>
-                      </td>
-                   </tr>
-                   <tr>
+                 </table>
+                 <table class="table noborder ismerchant <?php echo $merchantactivate == true ? 'activatemerchant' : ''; ?>" style="margin-top:5px;">
+                 	<h2 class="margin0 well-legend ismerchant <?php echo $merchantactivate == true ? 'activatemerchant' : ''; ?>" style="padding-left:10px;">Store Details</h2>
+                   	<tr>
+                        <td style="width:45%;"><label class="control-label"><?php echo $this->translate("merchant_type_label"); ?>: <?php echo $this->translate("global_required_field_marker"); ?></label>
+                            <?php
+                                $types = getMerchantType();
+                                $dropdown = new Zend_Form_Element_Select('merchanttype',
+                                                    array(
+                                                        'multiOptions' => array_merge_maintain_keys(array('' => '<Select One>'), $types),
+                                                        'view' => new Zend_View(),
+                                                        'decorators' => array('ViewHelper'),
+                                                        'class' => array('span2')
+                                                        
+                                                    )
+                                );  
+                                $dropdown->setValue($merchanttype); 
+                                echo $dropdown->render();
+                            ?><div id="merchanttype_error"></div>
+                        </td>
+                        <td>
+                            <label class="control-label"><?php echo $this->translate("merchant_category_label"); ?>: <?php echo $this->translate("global_required_field_marker"); ?></label></label>
+                            <?php
+                                $allcats = getBusinessCategories();
+                                $dropdown = new Zend_Form_Element_Select('category',
+                                                    array(
+                                                        'multiOptions' => array_merge_maintain_keys(array('' => '<Select One>'), $allcats),
+                                                        'view' => new Zend_View(),
+                                                        'decorators' => array('ViewHelper'),
+                                                        'class' => array('span3')
+                                                        
+                                                    )
+                                );  
+                                $dropdown->setValue($category); 
+                                echo $dropdown->render();
+                            ?><div id="category_error"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><label class="control-label"><?php echo $this->translate("merchant_storename_label"); ?>:<?php echo $this->translate("global_required_field_marker"); ?></label>
+                        <input type="text" name="storename" id="storename" class="span3" value="<?php echo $storename; ?>" /><div id="storename_error"></div></td>
+                        <td><label class="control-label"><?php echo $this->translate("merchant_storeusername_label"); ?>:<?php echo $this->translate("global_required_field_marker"); ?></label>
+                        <input style="" maxlength="20" class="span2 strictalpha" name="username" id="username" type="text" value="<?php echo $username; ?>"  />
+                        <label class='lineblocked'><a href="javascript: void(0);" class="btn btn-primary btn-mini" id='check_username_availability' title="Check Availability">Check</a></label>
+                        <div id="username_error"></div><div id="username_availability_result" style="margin-top:5px;"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2"><label class="control-label"><?php echo $this->translate("merchant_storeurl_label"); ?>: </label>
+                        <input type="hidden" name="url" id="url" class="span3" value="" />
+                        <span id="url_pre"></span><span id="url_post" class="bolded"></span>
+                        </td>
+                    </tr>
+                    <tbody class="company">
+                        <tr>
+                            <td colspan="2"><label class="control-label"><?php echo $this->translate("merchant_company_label"); ?>: <?php echo $this->translate("global_required_field_marker"); ?></label><input type="text" name="orgname" id="orgname" class="span3" value="<?php echo $orgname; ?>" /><div id="orgname_error"></div></td>
+                        </tr>
+                    </tbody>
+                  </table><br />
+                  <table class="table border0">
+                   <h2 class="margin0 well-legend ismerchant activatemerchant" style="padding-left:10px;" id="adminheader">Admin Details</h2>
+                   <tr class="<?php echo $merchantactivate == true ? 'activatemerchant' : ''; ?>">
                        <td width="42%"><label class="control-label firstname"><?php echo $this->translate("profile_firstname_label"); ?>: <?php echo $this->translate("global_required_field_marker"); ?></label>
                        <input name="firstname" id="firstname" type="text" class="span2 hastooltip max50content" value="<?php echo $firstname; ?>" title="<?php echo $this->translate("profile_firstname_tooltip"); ?>" />
                        <div id="firstname_error"></div></td>
@@ -421,22 +593,31 @@ ul#plans li {
                    </tr>
                    <tr>
                        <td colspan="2"><label class="control-label email"><?php echo $this->translate("profile_email_label"); ?>: <?php echo $this->translate("global_required_field_marker"); ?></label>
-                       <?php if(!isEmptyString($email) && !isEmptyString($request->profile)){ ?>
-                            <?php echo $email; ?><input name="email" id="email" type="hidden" value="<?php echo $email; ?>" />
-                       <?php } else { ?>
+                       <?php if($merchantactivate){ ?>
+                       		<?php echo $email; ?>
+                       <?php } ?>
+                       <?php if(!$merchantactivate){ ?>
                        		<input style="width:335px;" class="hastooltip validate_255_string" name="email" id="email" type="text" value="<?php echo $email; ?>" title="<?php echo $this->translate("profile_email_tooltip"); ?>" />
-                            <label class='lineblocked'><a href="javascript: void(0);" class="btn btn-primary btn-mini" id='check_profile_availability' title="Check Availability">Check</a></label>
+                            <label class='lineblocked'><a href="javascript: void(0);" class="btn btn-primary btn-mini" id='check_email_availability' title="Check Availability">Check</a></label>
                        <?php } ?>
                        <div id="email_error"></div><div id="email_availability_result" style="margin-top:5px;"></div></td>
                    </tr>
                    <tr>
                        <td colspan="2"><label class="control-label phone"><?php echo $this->translate("profile_phone_label"); ?>: <?php echo $this->translate("global_required_field_marker"); ?></label>
-                      <div class="input-prepend">
-                          <span class="add-on"><?php echo '+'.COUNTRY_CODE_UG; ?></span><input name="phone" id="phone" type="text" maxlength="10" class="span2 hastooltip" value="<?php echo getShortPhone($phone); ?>" title="<?php echo $this->translate("profile_phone_tooltip"); ?>"  />
-                       </div>
-                       <label class='lineblocked'><a href="javascript: void(0);" class="btn btn-primary btn-mini" id='check_phone_availability' title="Check Availability">Check</a></label><label class="pagedescription" style="font-size:10px;">e.g &nbsp; <span class="green">0772123456</span></label>
-                        <div id="phone_error"></div><div id="phone_availability_result" style="margin-top:5px;"></div></td>
+                       <?php if($merchantactivate){ ?>
+                       		<?php echo getShortPhone($phone); ?>
+                            
+                       <?php } ?>
+                       <?php if(!$merchantactivate){ ?>
+                            <div class="input-prepend">
+                              <span class="add-on"><?php echo '+'.COUNTRY_CODE_UG; ?></span><input name="phone" id="phone" type="text" maxlength="10" class="span2 hastooltip" value="<?php echo getShortPhone($phone); ?>" title="<?php echo $this->translate("profile_phone_tooltip"); ?>"  />
+                           </div>
+                           <label class='lineblocked'><a href="javascript: void(0);" class="btn btn-primary btn-mini" id='check_phone_availability' title="Check Availability">Check</a></label><label class="pagedescription" style="font-size:10px;">e.g &nbsp; <span class="green">0772123456</span></label>
+                            <div id="phone_error"></div><div id="phone_availability_result" style="margin-top:5px;"></div>
+                       <?php } ?>
+                       </td>
                    </tr>
+                   <tbody class="<?php echo !$merchantactivate ? 'hideonmerchant' : ''; ?>">
                    <tr>
                        <td><label class="control-label password"><?php echo $this->translate("useraccount_password_label"); ?>: <?php echo $this->translate("global_required_field_marker"); ?></label>
                        <input name="password" id="password" type="password" autocomplete="off" class="span2 password hastooltip" onkeyup="passwordStrength(this.value)" value="" title="<?php echo $this->translate("profile_password_tooltip"); ?>" />
@@ -445,7 +626,7 @@ ul#plans li {
                             <div id="passwordDescription" style="width:100px;">strength</div>
                             <div id="passwordStrength" class="strength0"></div>
                         </p>
-                       <div id="password_error"></div></td>
+                       <div id="password_error" class="clear blocked"></div></td>
                        <td><label class="control-label confirmpassword"><?php echo $this->translate("useraccount_password_confirm_label"); ?>: <?php echo $this->translate("global_required_field_marker"); ?></label>
                        <input name="confirmpassword" id="confirmpassword" autocomplete="off" type="password" class="span2 password hastooltip" value="" title="<?php echo $this->translate("profile_confirmpassword_tooltip"); ?>" />
                        <div id="confirmpassword_error"></div></td>
@@ -454,7 +635,8 @@ ul#plans li {
                        <td colspan="2" style="padding-bottom:30px;"><input type="checkbox" name="agreedtoterms" id="agreedtoterms" value="1" class="<?php echo $agreedtoterms; ?>" title="<?php echo $this->translate("useraccount_agreedtoterms_tooltip"); ?>" />
                         <?php echo sprintf($this->translate("useraccount_terms_accept_label"), '#', '#'); ?><?php echo $this->translate("global_required_field_marker"); ?><div id="agreedtoterms_error"></div></td>
                    </tr>
-                   <tr>
+                   </tbody>
+                   <tr class="<?php echo $merchantactivate == true ? 'activatemerchant' : ''; ?>">
                         <td style="text-align:right;"><label class="control-label captcha" style="float:right; text-align:right; width:100%;">Captcha: </label>
                         <span class="pagedescription">(enter the code you see)</span></td>
                         <td>
@@ -474,7 +656,7 @@ ul#plans li {
             <input type="hidden" name="usecustomsave" id="usecustomsave" value="true" />
             <input type="hidden" name="userid" id="userid" value="<?php echo $userid; ?>" />
             <input type="hidden" name="createdby" id="createdby" value="<?php echo $createdby; ?>" />
-            <input type="hidden" name="type" id="type" value="<?php echo $type; ?>" />
+            <!--<input type="hidden" name="type" id="type" value="<?php // echo $type; ?>" />-->
         </form>
     </span>
     <span class="span5 pull-right">

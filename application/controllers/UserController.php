@@ -17,10 +17,10 @@ class UserController extends IndexController  {
 			// return to the home page
     		$this->_helper->redirector->gotoSimpleAndExit('login', "user");
 		}
-			
+		
 		# check which field user is using to login. default is username
 		$credcolumn = "username";
-    	$login = (string)$this->_getParam("email");
+    	$login = (string)trim($this->_getParam("email"));
     	
     	# check if credcolumn is phone 
     	if(strlen($login) == 10 && is_numeric(substr($login, -6, 6))){
@@ -35,7 +35,7 @@ class UserController extends IndexController  {
            		$credcolumn = 'email';
             }
         }
-        // debugMessage($credcolumn);
+        // debugMessage($credcolumn); exit();
         
         if($credcolumn == 'email' || $credcolumn == 'username'){
 	        $authAdapter = new Zend_Auth_Adapter_DbTable(Zend_Registry::get("dbAdapter"));
@@ -59,7 +59,7 @@ class UserController extends IndexController  {
 	    		$audit_values['transactiondetails'] = "Login for user with email '".$this->_getParam("email")."' failed. Invalid username or password";
 				// $this->notify(new sfEvent($this, USER_LOGIN, $audit_values));
 				
-				$session->setVar(ERROR_MESSAGE, "Invalid Identity or Password. <br />Please Try Again."); 
+				$session->setVar(ERROR_MESSAGE, "Invalid Email or Phone or Password. <br />Please Try Again."); 
 				$session->setVar(FORM_VALUES, $this->_getAllParams());
 				// return to the home page
 	    		$this->_helper->redirector->gotoSimple('login', "user");
@@ -76,11 +76,12 @@ class UserController extends IndexController  {
         if($credcolumn == 'phone'){
         	$useracc = new UserAccount(); 
         	$result = $useracc->validateUserUsingPhone($this->_getParam("password"), $this->_getParam("email"));
+        	// debugMessage($result); exit();
         	if(!$result){
         		$audit_values['transactiontype'] = USER_LOGIN;
 	    		$audit_values['success'] = "N";
 	    		$audit_values['transactiondetails'] = "Login for user with email '".$this->_getParam("email")."' failed. Invalid username or password";
-				$this->notify(new sfEvent($this, USER_LOGIN, $audit_values));
+				// $this->notify(new sfEvent($this, USER_LOGIN, $audit_values));
 				
 				$session->setVar(ERROR_MESSAGE, "Invalid Email Address, Phone or Password. <br />Please Try Again."); 
 				$session->setVar(FORM_VALUES, $this->_getAllParams());
@@ -89,18 +90,13 @@ class UserController extends IndexController  {
 	    		return false; 
         	} else {
         		$useraccount = new UserAccount(); 
-				$useraccount->populate($result['userid']);
+				$useraccount->populate($result['id']);
         	}
         }
+		// debugMessage($useraccount->toArray());
 		
-		// exit();
 		$session->setVar("userid", $useraccount->getID());
-		$session->setVar("firstname",$useraccount->getFirstName());
-		$session->setVar("lastname", $useraccount->getLastName());
-		$session->setVar("email", $useraccount->getEmail());
-		$session->setVar("gender", $useraccount->getGender());
 		$session->setVar("phone", $useraccount->getPhone());
-		$session->setVar("profilepath", $useraccount->getProfilePath());
 		$session->setVar("type", $useraccount->getType());
 
 		$acl = new ACL($useraccount->getID());
@@ -113,16 +109,20 @@ class UserController extends IndexController  {
     	$this->clearUserCache();
     
 		// Add successful login event to the audit trail
-		/*$audit_values['transactiontype'] = USER_LOGIN;
+		$audit_values['transactiontype'] = USER_LOGIN;
     	$audit_values['success'] = "Y";
-		$audit_values['userid'] = $user->id;
-		$audit_values['executedby'] = $user->id;
+		$audit_values['userid'] = $useraccount->getID();
+		$audit_values['executedby'] = $useraccount->getID();
    		$audit_values['transactiondetails'] = "Login for user with email '".$this->_getParam("email")."' successful";
-		$this->notify(new sfEvent($this, USER_LOGIN, $audit_values));*/
+		// $this->notify(new sfEvent($this, USER_LOGIN, $audit_values));
 		
 		if (isEmptyString($this->_getParam("redirecturl"))) {
 			# forward to the dashboard
-			$this->_helper->redirector->gotoSimple("index", "dashboard");
+			if(isSubscriber()){
+				$this->_helper->redirector->gotoUrl($this->view->baseUrl("profile/view/id/".encode($useraccount->getID())));
+			} else {
+				$this->_helper->redirector->gotoSimple("index", "dashboard");
+			}
 		} else {
 			# redirect to the page the user was coming from 
 			$this->_helper->redirector->gotoUrl(decode($this->_getParam("redirecturl")));

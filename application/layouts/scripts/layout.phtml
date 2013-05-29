@@ -14,6 +14,7 @@
   $config = Zend_Registry::get("config"); 
   $session = SessionWrapper::getInstance();
   $isloggedin = false; 
+  $showloading = true;
   $userid = ""; 
   if (!isEmptyString($session->getVar("userid"))) {
 	$isloggedin = true; 
@@ -122,7 +123,7 @@ $(document).ready(function() {
 	});	
 	
 	// auto submit for list filters with the specified class, and all selects in a container with class filter 
-	$(".autosubmitsearchform, .filtercontainer select, #itemcountperpage, select.autofilter").not(".autosubmitsearchform").each(function(){
+	$(".autosubmitsearchform, .filtercontainer select, #itemcountperpage, select.autofilter, .autosearch").not(".autosubmitsearchform").each(function(){
 		$(this).change(function(){
 			// clear the values in the search field
 			clearValue("searchterm"); 
@@ -459,12 +460,41 @@ $(document).ready(function() {
 		 
 		return false;
 	});
+	
+	$(".approve").click(function() {
+		var merchant = $(this).attr('merchant');
+		var message = '<label class="blockcontainer">Are you sure you want to Approve Merchant <b>'+merchant+'</b> ? <br /><br /> Click <b>OK</b> to confirm, and <b>Cancel</b> to ignore</label>';
+		var url = $(this).attr('action');
+		// alert(url);
+		approve(message, url);
+	});
+	function approve(message, url) {
+		bootbox.confirm(message, function(confirmed) {
+			if(confirmed){
+				window.location.href = url;					
+			} else {
+				return false;
+			}
+		});
+	}
+	
+	// set hidden field for the alphabet and submit the form
+	$(".alphabet").click(function(){
+		var letter = $(this).attr('id');
+		// alert(letter);
+		$('#letter').val(letter);
+		$("#listform").submit();
+	});
 }); 
 //Use window.load and not document.ready for effective equal heights
 $(window).load(function() {
 	//Make columns equal
 	equalHeight($("#leftcolumn, #centercolumn"));
 	$("#contentcolumn").css({'height':'auto'});
+	
+	<?php if($showloading){ ?>
+		$('#dvLoading').fadeOut(1000);
+	<?php } ?>
 }); 
 </script>
 </head>
@@ -524,5 +554,6 @@ $(window).load(function() {
 <a id="loading" class="hidden"><img style="margin-left:250px;" src="<?php echo $this->baseUrl('images/loader.gif'); ?>" /></a>
 <a id="wait" class="hidden blocked centeralign"><img src="<?php echo $this->baseUrl('images/loader.gif'); ?>" /></a>
 <div class="hidden" id="printer_page_action_buttons"><a title="Close Window" onClick="window.close()" > <img src="<?php echo $this->baseUrl('images/close.png'); ?>" width="16" height="16" alt="Close Window"> </a> &nbsp;&nbsp; <a title="Print" onClick="window.print()" > <img src="<?php echo $this->baseUrl('images/printer.png'); ?>" width="16" height="16" alt="Print"> </a> </div>
+<div id="dvLoading"><img src="<?php echo $this->baseUrl('images/loaderimage.gif'); ?>" /></div>
 </body>
 </html>

@@ -88,9 +88,9 @@ class IndexController extends Zend_Controller_Action  {
     	// populate the object with data from the post and validate the object
     	// to ensure that its wellformed 
     	$new_object->processPost($this->_getAllParams());
-    	debugMessage($new_object->toArray());
+    	/*debugMessage($new_object->toArray());
     	debugMessage('errors are '.$new_object->getErrorStackAsString());
-    	// exit();
+    	exit();*/
     	if ($new_object->hasError()) {
     		// there were errors - add them to the session
     		$this->_logger->info("Validation Error for ".$classname." - ".$new_object->getErrorStackAsString());
@@ -182,9 +182,9 @@ class IndexController extends Zend_Controller_Action  {
     		$session->setVar(FORM_VALUES, $this->_getAllParams());
     		$session->setVar(ERROR_MESSAGE, $e->getMessage()); 
     		$this->_logger->err("Saving Error ".$e->getMessage());
-    		// debugMessage($e->getMessage()); exit();
+    		debugMessage($e->getMessage()); exit();
     		
-    		// return to the create page
+    		/*// return to the create page
     		if (isEmptyString($this->_getParam(URL_FAILURE))) {
     			$this->_helper->redirector->gotoSimple('index', # the action 
 	    							    $this->getRequest()->getControllerName(), # the current controller
@@ -195,8 +195,9 @@ class IndexController extends Zend_Controller_Action  {
     		} else {
     			$this->_helper->redirector->gotoUrl(decode($this->_getParam(URL_FAILURE)), $response_params); 
     			return false; 
-    		}
+    		}*/
     	}
+    	exit();
     }
 
     public function editAction() {
@@ -204,9 +205,28 @@ class IndexController extends Zend_Controller_Action  {
     	$this->createAction();
     }
     
-    public function deleteAction() {
-    	$this->_setParam("action", ACTION_DELETE); 
-    	$this->createAction();
+	public function deleteAction() {
+		$this->_setParam("action", ACTION_DELETE); 
+		
+    	$session = SessionWrapper::getInstance(); 
+    	$this->_helper->layout->disableLayout();
+		$this->_helper->viewRenderer->setNoRender(TRUE);
+		
+		$formvalues = $this->_getAllParams();
+		$successurl = decode($formvalues['successurl']);
+		$classname = $formvalues['entityname'];
+		// debugMessage($successurl);
+		
+    	$obj = new $classname;
+    	$obj->populate($formvalues['id']);
+    	// debugMessage($obj->toArray());
+    	// exit();
+    	if($obj->delete()) {
+    		$session->setVar(SUCCESS_MESSAGE, $this->_translate->translate("global_delete_success"));
+    		$this->_helper->redirector->gotoUrl($successurl);
+    	}
+    	
+    	return false;
     }
     
 	public function approveAction() {
@@ -418,13 +438,27 @@ class IndexController extends Zend_Controller_Action  {
      	$this->_helper->layout->disableLayout();
 		$this->_helper->viewRenderer->setNoRender(TRUE);
 		$formvalues = $this->_getAllParams();
+		$this->_setParam("action", ACTION_VIEW);
 		
-		$session->setVar(SUCCESS_MESSAGE, "Successfully added");
+		$session->setVar(SUCCESS_MESSAGE, "Successfully saved");
    		if(!isArrayKeyAnEmptyString('successmessage', $formvalues)){
 			$session->setVar(SUCCESS_MESSAGE, decode($formvalues['successmessage']));
 		}
+		
     } 
     
+	public function adderrorAction(){
+		$session = SessionWrapper::getInstance(); 
+     	$this->_helper->layout->disableLayout();
+		$this->_helper->viewRenderer->setNoRender(TRUE);
+		$formvalues = $this->_getAllParams();
+		
+		$currenterror = $session->getVar(ERROR_MESSAGE);
+		if(isEmptyString($currenterror)){
+			$session->setVar(ERROR_MESSAGE, "An error occured in updating database");
+		}
+	}
+	
 	public function profileupdatesuccessAction(){
 		$session = SessionWrapper::getInstance(); 
      	$this->_helper->layout->disableLayout();
@@ -448,4 +482,6 @@ class IndexController extends Zend_Controller_Action  {
 			$session->setVar(SUCCESS_MESSAGE, decode($formvalues['successmessage']));
 		}
     } 
+    
+    
 }

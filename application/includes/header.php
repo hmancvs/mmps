@@ -26,3 +26,5 @@ $islinux = false;
 if($os != 'nt'){
   $islinux = true;
 }
+
+$showloading = false;

@@ -5,25 +5,57 @@ class SignupController extends IndexController   {
 	function processstep1Action() {
 		// the group to which the user is to be added
 		$formvalues = $this->_getAllParams();
-		// debugMessage($this->_getAllParams()); // exit();	
-			
+		debugMessage($this->_getAllParams()); // exit();	
+		$iscustomer = false;
+		$ismerchant = false;
+		if($this->_getParam('type') == 2){
+			$iscustomer = true;
+		}
+		if($this->_getParam('type') == 3){
+			$ismerchant = true;
+		}	
+		
 		$this->_setParam("isactive", 0); 
 		$this->_setParam('entityname', 'UserAccount');
 		$this->_setParam(URL_FAILURE, encode($this->view->baseUrl("signup")));
 		$this->_setParam(URL_SUCCESS, encode($this->view->baseUrl("signup/confirm")));
 		$this->_setParam("action", ACTION_CREATE); 
+		$firstname = ucfirst($formvalues['firstname']);
+		$lastname = ucfirst($formvalues['lastname']);
 		
 		// set parent's gender from person type
 		$post = array(
 			"createdby" => "1",
-			"usergroups_groupid" => array(2),
+			"usergroups_groupid" => array($this->_getParam('type')),
 			"type" => $this->_getParam('type')
 		);
 		
-		$this->_setParam('firstname', ucfirst($formvalues['firstname']));
-		$this->_setParam('lastname', ucfirst($formvalues['lastname']));
+		if($ismerchant){
+			$thestore = array(); 
+			$thestore[0]['name'] = $formvalues['storename'];
+			$thestore[0]['username'] = $formvalues['username'];
+			$thestore[0]['url'] = $formvalues['url'];
+			
+			$post['merchant']['type'] = $formvalues['merchanttype'];
+			$post['merchant']['category'] = $formvalues['category'];
+			if($formvalues['merchanttype'] == 1){
+				$post['merchant']['contactperson'] = $firstname.' '.$lastname;
+				$post['merchant']['orgname'] = $formvalues['orgname'];
+			}
+			if($formvalues['merchanttype'] == 2){
+				$post['merchant']['firstname'] = $firstname;
+				$post['merchant']['lastname'] = $lastname;
+			} 
+			$post['merchant']['phone'] = str_pad(ltrim($formvalues['phone'], '0'), 12, COUNTRY_CODE_UG, STR_PAD_LEFT);
+			$post['merchant']['email'] = $formvalues['email'];
+			$post['merchant']['stores'] = $thestore;
+		}
+		
+		$this->_setParam('firstname', $firstname);
+		$this->_setParam('lastname', $lastname);
 		$this->_setParam('createdby', $post['createdby']);
 		$this->_setParam('usergroups_groupid', $post['usergroups_groupid']);
+		$this->_setParam('merchant', $post['merchant']);
 		
 		// debugMessage($this->_getAllParams());
 		// exit();
@@ -36,103 +68,24 @@ class SignupController extends IndexController   {
 		
 		$formvalues = $this->_getAllParams();
 		$session = SessionWrapper::getInstance(); 
-		$formvalues['id'] = $formvalues['farmerid'];
+		$id = $formvalues['userid'];
 		// debugMessage($formvalues);
 		
-		$this->_setParam('entityname', 'Farmer');
-		$this->_setParam(URL_FAILURE, encode($this->view->baseUrl('signup/index/profile/'.encode($formvalues['id'])."/")));
-		$this->_setParam(URL_SUCCESS, encode($this->view->baseUrl("signup/inviteconfirmation")));
-		$this->_setParam("action", ACTION_EDIT);
-		$this->_setParam('createdby', 1);
+		$user = new UserAccount();
+		$user->populate($id);
+		// debugMessage($user->toArray());
+		$user->setPassword(sha1($formvalues['password']));
+		$user->setActivationDate(date('Y-m-d H:i:s'));
+		$user->setActivationKey('');
+		$user->setIsActive(1);
+		$user->setAgreedToTerms(1);
+		$user->save();
 		
-		$farmer = new Farmer(); 
-		$farmer->populate($formvalues['id']);
+		// exit();
+		$this->clearSession();
+		$loginurl = $this->view->baseUrl("user/checklogin/email/".$user->getEmail().'/password/'.$formvalues['password']);
+		$this->_helper->redirector->gotoUrl($loginurl);
 		
-		# determine if is a farmer or farmgroup clerk
-		$isgroupclerk = false;
-		$isfarmer = true;
-		if($farmer->getFarmGroup()->getManagerID() == $farmer->getID()){
-			$isgroupclerk = true;
-			$isfarmer = false;
-		}
-		
-		if(isEmptyString($formvalues['birthday'])){
-			$formvalues['birthday'] = NULL;
-		}
-		if(isEmptyString($formvalues['birthmonth'])){
-			$formvalues['birthmonth'] = NULL;
-		}
-		if(isEmptyString($formvalues['birthmonth'])){
-			$formvalues['birthyear'] = NULL;
-		}
-		if(!isEmptyString($formvalues['birthday']) && !isEmptyString($formvalues['birthmonth']) && !isEmptyString($formvalues['birthyear'])){
-			$formvalues['dateofbirth'] = $formvalues['birthyear']."-".$formvalues['birthmonth']."-".$formvalues['birthday'];
-		} else {
-			if(!isEmptyString($formvalues['dateofbirth'])){
-				$formvalues['dateofbirth'] = changeDateFromPageToMySQLFormat($formvalues['dateofbirth']); 
-			} else {
-				$formvalues['dateofbirth'] = NULL;
-			}
-		}
-		
-		$formvalues['gtype'] = 2;
-		if($farmer->isFarmGroupManager()){
-			$formvalues['gtype'] = 3;
-			$formvalues['membershipplanid'] = 4;
-		}
-		
-		// user account data
-		$userarray = array(
-				"id" => $formvalues['userid'],
-				"farmerid" => $formvalues['farmerid'],
-				"gender" => $formvalues['gender'],
-				"type" => $formvalues['gtype'],
-				"firstname" => $formvalues['firstname'],
-			    "lastname" => $formvalues['lastname'],
-		 		"username" => $formvalues['username'],
-			    "email" => $formvalues['email'],
-				"phone" => $formvalues['phone'],
-			    "password" => sha1($formvalues['password']),
-			    "agreedtoterms" => $formvalues['agreedtoterms'], 
-			    "membershipplanid" => $formvalues['membershipplanid'],
-				"isactive" => 1,
-				"activationkey" => NULL,
-  				"activationdate" => date("Y-m-d"),
-				"usergroups" => array(
-					array("groupid" => $formvalues['type'])
-				),
-				"createdby" => "1"
-			);
-
-		$formvalues['user'] = $userarray;
-		$formvalues['hasacceptedinvite'] = '1';
-		// debugMessage($formvalues);
-		// exit(); 
-		$farmer->processPost($formvalues);
-		/*debugMessage($farmer->toArray()); 
-		debugMessage('process errors are '.$farmer->getErrorStackAsString()); exit(); */
-		// check for processing errors
-		if($farmer->hasError()) {
-			// debugMessage('process errors are '.$farmer->getErrorStackAsString()); exit();
-			$session->setVar(FORM_VALUES, $this->_getAllParams());
-    		$session->setVar(ERROR_MESSAGE, $farmer->getErrorStackAsString()); 
-			$this->_helper->redirector->gotoUrl(decode($this->_getParam(URL_FAILURE)));
-		} else {
-			try {
-				if($farmer->transactionInviteUpdate()){
-					# set subscription period for user
-					$farmer->setNewSubscription();
-					$this->_helper->redirector->gotoUrl(decode($this->_getParam(URL_SUCCESS))); 
-				}
-			} catch (Exception $e) {
-				$session->setVar(FORM_VALUES, $this->_getAllParams());
-    			$session->setVar(ERROR_MESSAGE, $e->getMessage()); 
-    			// debugMessage('save errors are '.$e->getMessage());
-				$this->_helper->redirector->gotoUrl(decode($this->_getParam(URL_FAILURE)));
-			}
-		}
-		
-		// parent::createAction();
 		return false;
 	}
 	
@@ -289,23 +242,22 @@ class SignupController extends IndexController   {
 		//debugMessage($user->getFarmer()->getNextRegNo());
 	}
 	
-	function checkusernameAction(){
+	function checkstoreusernameAction(){
 		$this->_helper->layout->disableLayout();
 	    $this->_helper->viewRenderer->setNoRender(true);
 	    
 		$formvalues = $this->_getAllParams();
 		$username = trim($formvalues['username']);
 		// debugMessage($formvalues);
-		$user = new UserAccount();
-		if(!isArrayKeyAnEmptyString('userid', $formvalues)){
-			$user->populate($formvalues['userid']);
+		$merchant = new Merchant();
+		if(!isArrayKeyAnEmptyString('merchantid', $formvalues)){
+			$merchant->populate($formvalues['merchantid']);
 		}
-		if($user->usernameExists($username)){
+		if($merchant->usernameExists($username)){
 			echo '1';
 		} else {
 			echo '0';
 		}
-		
 	}
 	
 	function checkemailAction(){

@@ -6,7 +6,7 @@
 	if($controller == 'profile' && isEmptyString($request->tab)){
 		$request->setParam('tab', 'basics'); 
 	}
-	// debugMessage($user->toArray());
+	// debugMessage($product->toArray());
 ?>
 <script>
 $(document).ready(function() {
@@ -32,14 +32,11 @@ $(document).ready(function() {
 			var controller = '<?php echo $controller; ?>';
 			var action = '<?php echo $action; ?>';
 			var ismerchant = '<?php echo isMerchant() ? 1 : 0; ?>';
-			if(controller == 'profile' && action == 'index'){
-				var url = "<?php echo $this->baseUrl("profile/index/id/".encode($user->getID())."/tab/"); ?>"+currentclass;
+			if(controller == 'product' && action == 'index'){
+				var url = "<?php echo $this->baseUrl("product/index/id/".encode($product->getID())."/tab/"); ?>"+currentclass;
 			}
-			if((controller == 'profile' && action == 'view')){
-				var url = "<?php echo $this->baseUrl("profile/view/id/".encode($user->getID())."/tab/"); ?>"+currentclass;
-			}
-			if((currentclass == 'contacts' && ismerchant == '1')){
-				var url = "<?php echo $this->baseUrl("merchant/view/id/".encode($user->getMerchantID())); ?>";
+			if((controller == 'product' && action == 'view') || currentclass == image || currentclass == download || currentclass == download){
+				var url = "<?php echo $this->baseUrl("product/view/id/".encode($product->getID())."/tab/"); ?>"+currentclass;
 			}
 			if(!isEmptyString(url)){
 				location.href = url;  
@@ -55,19 +52,15 @@ $(document).ready(function() {
 <div class="span3 marginleft0" id="left">    
     <div class="well" id="profiletop">
         <div id="profileinfo"> 
-			<img id="profileimage" src="<?php echo $user->getMediumPicturePath(); ?>" alt="Update Profile Photo" />
+			<img id="profileimage" src="<?php echo $product->getMediumPicturePath(); ?>" alt="Update Profile Photo" />
         </div>
     </div>
     <ul id="leftnav" style="width:97%;">
-        <li id="tab_basics"><a href="#basics" class="basics">My Profile</a></li>
-        <?php if(isSubscriber()){ ?>
-            <li id="tab_contacts"><a href="#contacts" class="contacts">Payment History</a></li>
-            <li id="tab_personal"><a href="#personal" class="personal">My Downloads</a></li>
-            <li id="tab_farm"><a href="#farm" class="farm">Watch List</a></li>
-        <?php } ?>
-        <?php if(isMerchant()){ ?>
-            <li id="tab_contacts"><a href="#contacts" class="contacts">My Store</a></li>
-        <?php } ?>
-        <li id="tab_account"><a href="#account" class="account">Account Settings</a></li>   
+        <li id="tab_general"><a href="#general" class="general">General</a></li>
+        <li id="tab_spec"><a href="#spec" class="spec">Specification</a></li>
+        <li id="tab_price"><a href="#price" class="price">Price</a></li>
+        <li id="tab_image"><a href="#image" class="image">Images</a></li>
+        <li id="tab_download"><a href="#download" class="download">Downloads</a></li>
+        <li id="tab_account"><a href="#account" class="account">Settings</a></li>   
     </ul>
 </div>

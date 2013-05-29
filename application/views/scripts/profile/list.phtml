@@ -112,26 +112,10 @@ $(document).ready(function() {
                             <table id="directorysearchtable" class="table noborder margin0">
                                 <tr>
                                     <td style="width:55px; padding-top:6px; padding-left:2px; padding-right:2px;">                                    
-                                       <?php if(isAdmin()){ ?>
-                                       		<a href="<?php echo $this->baseUrl('profile/add/pgc/true'); ?>" class="addpopup adduser btn btn-primary btn-mini" title="New User" rel="New User" id="newuser" formtitle="indexform" successurl="<?php echo $listurl; ?>" action="<?php echo $this->baseUrl("profile/create"); ?>"><i class="icon-plus icon-white"></i> New</a>
-                                       <?php } ?>     
+                                       
                                     </td>
                                     <td style="width:100px; padding-left:4px; padding-right:2px;">
-                                        <label class="control-label">Gender:</label>
-                                        <?php
-                                            $allgenders = array('' => 'All','1'=>'Male','2'=>'Female');
-                                            $genderdropdown = new Zend_Form_Element_Select('u'.HTML_TABLE_COLUMN_SEPARATOR.'gender',
-                                                                array(
-                                                                    'multiOptions' => $allgenders,
-                                                                    'view' => new Zend_View(),
-                                                                    'decorators' => array('ViewHelper'),
-                                                                    'class' => array('gender','span2','autofilter'),
-                                                                    'title' => 'Filter By Gender'		
-                                                                )
-                                            );  
-                                            $genderdropdown->setValue($request->getParam('u'.HTML_TABLE_COLUMN_SEPARATOR.'gender')); 
-                                            echo $genderdropdown->render();
-                                        ?>
+                                       
                                     </td>
                                     <td style="width:185px; padding-left:2px; padding-right:2px;">
                                         

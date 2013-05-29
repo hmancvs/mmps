@@ -719,6 +719,11 @@ function isDataClerk() {
 	$session = SessionWrapper::getInstance(); 
 	return $session->getVar('type') == '4' ? true : false;
 }
+# determine if loggedin user is subscriber
+function isMerchant() {
+	$session = SessionWrapper::getInstance(); 
+	return $session->getVar('type') == '3' ? true : false;
+}
 # determine current status label
 function getStatusText($status) {
 	$text = '--';

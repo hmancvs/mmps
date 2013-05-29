@@ -617,6 +617,30 @@
 	function getPaymentStatuses(){
 		return array(3=>'Completed',2=>'Cancelled',1=>'Pending');
 	}
+	# merchant registration status values
+	function getMerchantApprovalStatus($value = ''){
+		$array = array(0 =>'Pending', 1 => 'Approved', 2=>'Rejected');
+		if(!isEmptyString($value)){
+			return $array[$value];
+		}
+		return $array;
+	}
+	# merchant registration status values
+	function getMerchantType($value = ''){
+		$array = array(1 =>'Company', 2 => 'Person');
+		if(!isEmptyString($value)){
+			return $array[$value];
+		}
+		return $array;
+	}
+	# mechant business category
+	function getBusinessCategories($value = ''){
+		$array = array(1 =>'Information Technology', 2 => 'Banking', '3' => 'Events Management');
+		if(!isEmptyString($value)){
+			return $array[$value];
+		}
+		return $array;
+	}
 	# all listable variable groupings
 	function getAllists(){
 		$conn = Doctrine_Manager::connection();
@@ -629,4 +653,10 @@
 		$all_users = $conn->fetchAll("SELECT u.id as id, concat(u.firstname, ' ', u.lastname, ' ', u.othernames) as name FROM useraccount AS u inner join farmer f on (u.farmerid = f.id) WHERE u.type = '2' order by u.activationdate DESC limit ".$limit);
 		return $all_users;
 	}
+	# latest system user farmers
+	function getAllMerchantStores($id = ''){
+		$query = "SELECT s.id as optionvalue, concat(s.name, ' [', s.url, ']') as optiontext FROM store AS s inner join merchant m on (s.merchantid = m.id) WHERE s.id <> '' order by s.name ";
+		return getOptionValuesFromDatabaseQuery($query);
+	}
+	
 ?>

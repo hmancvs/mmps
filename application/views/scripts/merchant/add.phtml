@@ -1,15 +1,14 @@
 <?php
 	require_once APPLICATION_PATH.'/includes/header.php';
 	
-	$user = new UserAccount(); 
+	$merchant = new Merchant(); 
+	$merchant->setType(1);
 	
 	#in case of errors in session, populate the fields from session
 	if(!isEmptyString($session->getVar(ERROR_MESSAGE))){ 
-		$user->processPost($session->getVar(FORM_VALUES));	
+		$merchant->processPost($session->getVar(FORM_VALUES));	
 	}
-	
-	$title = $this->translate("merchant_pagetitle_new"); 
-	$this->headTitle($title);
+	$store = $merchant->getStore();
 	
 ?>
 <script>
@@ -18,31 +17,52 @@
 			// define the validation rules one field at a time
 			rules: {
 				firstname: "required",
-				lastname: "required",		
+				lastname: "required",
+				orgname: "required",
+				contactperson: "required",		
 				email: {
-					"required": false, 
+					required: true, 
 					email: true
 				},
 				phone: {
-					required: false, 					
+					required: true, 					
 					validnumber: true,
 					maxlength: 10,
 					minlength: 10,
 					validate_ug: true
+				},
+				type: "required",
+				category: "required",
+				storename: "required",
+				username: {
+					required: true, 
+					minlength: 4,
+					maxlength: 15
 				}
 			}, 
 			// the messages for each of the fields being validated
 			messages: {		
 				firstname: "<?php echo $this->translate("merchant_firstname_error"); ?>",
-				lastname: "<?php echo $this->translate("merchant_lastname_error"); ?>",		
+				lastname: "<?php echo $this->translate("merchant_lastname_error"); ?>",
+				orgname: "<?php echo $this->translate("merchant_company_error"); ?>",
+				contactperson: "<?php echo $this->translate("merchant_contact_error"); ?>",		
 				email: {
-					"email": "<?php echo $this->translate("useraccount_email_invalid_error"); ?>"
+					"required": "<?php echo $this->translate("profile_email_error"); ?>", 
+					"email": "<?php echo $this->translate("profile_email_invalid_error"); ?>"
 				},
 				phone: {
-					validnumber: "Please enter a valid Phone Number",
+					required: "<?php echo $this->translate("profile_phonenumber_error"); ?>", 					
 					maxlength: "Phone Number must have 10 Digits",
 					minlength: "Phone Number must have 10 Digits",
 					validate_ug: "<?php echo $this->translate("globale_phonenumber_format"); ?>"
+				},
+				type: "<?php echo $this->translate("merchant_type_error"); ?>",
+				category: "<?php echo $this->translate("merchant_category_error"); ?>",
+				storename: "<?php echo $this->translate("merchant_storename_error"); ?>",
+				username: {
+					required: "<?php echo $this->translate("useraccount_username_error"); ?>", 					
+					minlength: "Username must have atleast 4 characters",
+					maxlength: "Username must not exceed 15 characters"
 				}
 			},
 			// custom error positions
@@ -69,28 +89,68 @@
 			return true;        
 		}, "<?php echo $this->translate("globale_phonenumber_format"); ?>");
 		
+		<?php if($merchant->isCompany()){ ?>
+			// show the company only fields			
+			disableContainerByClass("person");
+			enableContainerByClass("company");
+		<?php } ?>
+		//trigger a click action on the selected radio button to enable and disable the approprate fields
+		<?php if($merchant->isPerson()){ ?>
+			// show the person only fields			
+			disableContainerByClass("company");	
+			enableContainerByClass("person");
+		<?php } ?>		
 		
-		// tooltips in popup
-		$(".hastooltip").each(function(){		
-			var theid = $(this).attr('id');
-			var thepath = '<?php echo $this->baseUrl('images/questionmark.png'); ?>';
-			if($(this).attr('title') != "undefined" || $(this).attr('title') != ""){
-				$('<a href="javascript: void(0);" class="qcontainer" id="q_'+theid+'"><img src="'+thepath+'" /></a>').insertAfter(this);
-				$("#q_"+theid).attr('title', $(this).attr('title')).addClass('qtooltip');
-			}	    
-		}); 
-		$('.qtooltip').tipsy({fade: true, gravity: 'w', html: true, trigger: 'hover', offset: -5});
-    	$(".hastooltip").attr('title','');
-		
-		// reset tab index
-		var tabindex = 1;
-		$('input,select').each(function() {
-			if (this.type != "hidden") {
-				var $input = $(this);
-				$input.attr("tabindex", tabindex);
-				tabindex++;
+		// when the person contact is selected, hide the contact tbody and disable all inputs in it
+		$("#type").change(function() {
+			var type = $(this).val();
+			if(type == "1"){
+				// show the company only fields			
+				disableContainerByClass("person");
+				enableContainerByClass("company");
 			}
+			if(type == "2"){
+				// show the person only fields			
+				disableContainerByClass("company");	
+				enableContainerByClass("person");
+			} 	
 		});
+		
+		//when button is clicked  
+        $('#check_username_availability').click(function(){ 
+			check_user_availability();  
+        });
+		$('#username').change(function(){ 
+			check_user_availability();  
+        });  
+		$('#username').keyup(function(){
+			this.value = this.value.toLowerCase();
+		});
+		
+		//function to check username availability  
+		function check_user_availability(){  
+			//get the username
+			var checking_html = 'Checking availability...';   
+			var username = $('#username').val();  
+			if(!isEmptyString(username) && username.length >= 4 && username.length <= 15 && isAlpha(username)){
+				// alert('passed');
+				$('#username_availability_result').html(checking_html); 
+				var merchantid = '<?php echo $merchant->getID(); ?>';
+				//use ajax to run the check  
+				$.post("<?php echo $this->baseUrl('signup/checkstoreusername'); ?>", { username: username, merchantid: merchantid },  
+					function(result){  
+						//if the result is 1  
+						// alert(result); // return false;
+						if(result == 1){  
+							//show that the username is available
+							$('#username_availability_result').html(username + ' is NOT available!').addClass('alert').addClass('alert-error').removeClass('alert-success'); 
+						} else {  
+							//show that the username is NOT available  
+							$('#username_availability_result').html(username + ' is available').addClass('alert').addClass('alert-success').removeClass('alert-error');
+						}  
+				});   
+			}
+		}  
 		
 		//when button is clicked  
         $('#check_phone_availability').click(function(){ 
@@ -107,9 +167,8 @@
 			var phone = $('#phone').val();  
 			if(!isEmptyString(phone) && isUgNumber(phone)){
 				$('#phone_availability_result').html(checking_html);  
-				
 				//use ajax to run the check  
-				$.post("<?php echo $this->baseUrl('signup/checkphone'); ?>", { phone: phone },  
+				$.post("<?php echo $this->baseUrl('signup/checkphone'); ?>", { phone: phone},  
 					function(result){  
 						//if the result is 1  
 						// alert(result); return false;
@@ -133,7 +192,7 @@
         });  
 		$('#email').keyup(function(){
 			this.value = this.value.toLowerCase();
-		});
+		});  
 		
 		//function to check email availability  
 		function check_email_availability(){  
@@ -157,14 +216,46 @@
 						}  
 				});  
 			}
-		} 
+		}  
 		
-		$("#firstname").focus();
+		// reset tab index
+		var tabindex = 1;
+		$('input,select').each(function() {
+			if (this.type != "hidden") {
+				var $input = $(this);
+				$input.attr("tabindex", tabindex);
+				tabindex++;
+			}
+		});
+
+		var defaulturl = '<?php echo $merchant->getDefaultStore(); ?>';
+		$('#url_pre').html(defaulturl);
+		
+		var def_username = 'username';
+		<?php if(!isEmptyString($store->getUserName())){ ?>
+			var def_username = '<?php echo $store->getUserName(); ?>';
+		<?php } ?>
+		$('#url_post').html(def_username);
+		var saveurl = $('#url_pre').html()+$('#url_post').html();
+		$('#url').val(saveurl);
+		$('#username').keyup(function(){
+			var current = $(this).val();
+			$('#url_post').html(current);
+			var saveurl = $('#url_pre').html()+$('#url_post').html();
+			$('#url').val(saveurl);
+		});
 	}); 
 </script>
 <style>
 body {
 	overflow:hidden;
+}
+.popupdiv .checkbox {
+	margin-top:-2px;
+}
+tr#checkboxes td {
+	font-size: 12px;
+	font-weight:bold;
 }
 </style>
 <div class="popupdiv">
@@ -176,34 +267,99 @@ body {
 	        </tr>
         <?php } ?>
         <tr>
-            <td><label class="control-label" for="firstname"><?php echo $this->translate("merchant_firstname_label"); ?>:<?php echo $this->translate("global_required_field_marker"); ?></label></td>
-            <td><input type="text" name="firstname" id="firstname" class="span3 hastooltip" value="<?php echo $user->getFirstName(); ?>" title="<?php echo $this->translate("merchant_firstname_tooltip"); ?>"  /><div id="firstname_error"></div>
-            	<input type="hidden" name="entityname" value="Merchant" />
-			    <input type="hidden" id="id" name="id" value="<?php echo encode($user->getID()); ?>" />
-                <input type="hidden" name="<?php echo URL_SUCCESS; ?>" value="<?php echo encode($this->baseUrl('index/addsuccess')); ?>" />
-                <input type="hidden" name="<?php echo URL_FAILURE; ?>" value="<?php echo encode($this->baseUrl('index/adderror')); ?>" />
-                <input type="hidden" name="<?php echo SUCCESS_MESSAGE; ?>" value="merchant_add_success" />
+            <td style="width:50%;"><label class="control-label"><?php echo $this->translate("merchant_type_label"); ?>: <?php echo $this->translate("global_required_field_marker"); ?></label>
+            	<?php
+                    $allmerchants = getMerchantType();
+                    $dropdown = new Zend_Form_Element_Select('type',
+                                        array(
+                                            'multiOptions' => array_merge_maintain_keys(array('' => '<Select One>'), $allmerchants),
+                                            'view' => new Zend_View(),
+                                            'decorators' => array('ViewHelper'),
+                                            'class' => array('span2')
+											
+                                        )
+                    );  
+                    $dropdown->setValue($merchant->getType()); 
+                    echo $dropdown->render();
+                ?><div id="type_error"></div>
+            </td>
+            <td>
+            	<label class="control-label"><?php echo $this->translate("merchant_category_label"); ?>: <?php echo $this->translate("global_required_field_marker"); ?></label></label>
+                <?php
+                    $allcats = getBusinessCategories();
+                    $dropdown = new Zend_Form_Element_Select('category',
+                                        array(
+                                            'multiOptions' => array_merge_maintain_keys(array('' => '<Select One>'), $allcats),
+                                            'view' => new Zend_View(),
+                                            'decorators' => array('ViewHelper'),
+                                            'class' => array('span3')
+											
+                                        )
+                    );  
+                    $dropdown->setValue($merchant->getcategory()); 
+                    echo $dropdown->render();
+                ?><div id="category_error"></div>
             </td>
         </tr>
         <tr>
-            <td><label class="control-label"><?php echo $this->translate("merchant_lastname_label"); ?>:<?php echo $this->translate("global_required_field_marker"); ?></label></td>
-            <td><input type="text" name="lastname" id="lastname" class="span3 hastooltip" value="<?php echo $user->getLastName(); ?>" title="<?php echo $this->translate("merchant_lastname_tooltip"); ?>" /><div id="lastname_error"></div></td>
+            <td><label class="control-label"><?php echo $this->translate("merchant_storename_label"); ?>:<?php echo $this->translate("global_required_field_marker"); ?></label>
+            <input type="text" name="storename" id="storename" class="span3" value="" /><div id="storename_error"></div></td>
+        	<td><label class="control-label"><?php echo $this->translate("merchant_storeusername_label"); ?>:<?php echo $this->translate("global_required_field_marker"); ?></label>
+            <input style="" maxlength="20" class="span2 strictalpha" name="username" id="username" type="text" value="<?php // echo $username; ?>"  />
+            <label class='lineblocked'><a href="javascript: void(0);" class="btn btn-primary btn-mini" id='check_username_availability' title="Check Availability">Check</a></label>
+            <div id="username_error"></div><div id="username_availability_result" style="margin-top:5px;"></div>
+            </td>
         </tr>
         <tr>
-            <td><label class="control-label"><label class="control-label"><?php echo $this->translate("merchant_lastname_label"); ?>: </label></td>
-            <td><div class="input-prepend">
-                    <span class="add-on"><?php echo '+'.COUNTRY_CODE_UG; ?></span><input name="phone" id="phone" type="text" maxlength="10" class="span2 hastooltip" style="width:110px; height:18px;" value="" title="<?php echo $this->translate("merchant_phone_tooltip"); ?>" />
+            <td colspan="2"><label class="control-label"><?php echo $this->translate("merchant_storeurl_label"); ?>: </label>
+            <input type="hidden" name="url" id="url" class="span3" value="" />
+            <span id="url_pre"></span><span id="url_post" class="bolded"></span>
+            </td>
+        </tr>
+        <tbody class="person">
+            <tr>
+                <td><label class="control-label" for="firstname"><?php echo $this->translate("merchant_firstname_label"); ?>:<?php echo $this->translate("global_required_field_marker"); ?></label>
+                <input type="text" name="firstname" id="firstname" class="span3" value="<?php echo $merchant->getFirstName(); ?>"  /><div id="firstname_error"></div></td>
+                <td><label class="control-label"><?php echo $this->translate("merchant_lastname_label"); ?>:<?php echo $this->translate("global_required_field_marker"); ?></label><input type="text" name="lastname" id="lastname" class="span3" value="<?php echo $merchant->getLastName(); ?>" /><div id="lastname_error"></div></td>
+            </tr>
+        </tbody>
+        <tbody class="company">
+            <tr>
+                <td><label class="control-label"><?php echo $this->translate("merchant_company_label"); ?>: <?php echo $this->translate("global_required_field_marker"); ?></label><input type="text" name="orgname" id="orgname" class="span3" value="<?php echo $merchant->getorgname(); ?>" /><div id="orgname_error"></div></td>
+                <td><label class="control-label"><?php echo $this->translate("merchant_contact_label"); ?>: <?php echo $this->translate("global_required_field_marker"); ?></label><input type="text" name="contactperson" id="contactperson" class="span3" value="<?php echo $merchant->getcontactperson(); ?>" /><div id="contactperson_error"></div></td>
+            </tr>
+        </tbody>
+        <tr>
+            <td><label class="control-label"><?php echo $this->translate("merchant_phone_label"); ?>: <?php echo $this->translate("global_required_field_marker"); ?></label>
+            	<div class="input-prepend">
+                    <span class="add-on"><?php echo '+'.COUNTRY_CODE_UG; ?></span><input name="phone" id="phone" type="text" maxlength="10" class="span2" style="width:110px; height:18px;" value="" />
                     
-                    <label class='lineblocked'><a href="javascript: void(0);" class="btn btn-primary btn-mini" id='check_phone_availability' title="Check Availability">Check</a></label><label class="pagedescription" style="font-size:10px;">e.g &nbsp; <span class="green">0772123456</span></label>
-                     <div id="phone_error"></div><div id="phone_availability_result" style="margin-top:5px;"></div>
+                    <!--<label class='lineblocked'><a href="javascript: void(0);" class="btn btn-primary btn-mini" id='xcheck_phone_availability' title="Check Availability">Check</a></label><label class="pagedescription" style="font-size:10px;">e.g &nbsp; <span class="green">0772123456</span></label>
+                    <div id="xphone_availability_result" style="margin-top:5px;"></div>--><div id="phone_error"></div>
+                </div>
             </td>
-        </tr>
-        <tr>
-            <td><label class="control-label" for="email"><?php echo $this->translate("merchant_email_label"); ?>: </label></td>
-            <td><input type="text" name="email" id="email" value="" class="hastooltip span3" title="<?php echo $this->translate("merchant_inviteemail_tooltip"); ?>" />
+        	<td><label class="control-label" for="email"><?php echo $this->translate("merchant_email_label"); ?>: <?php echo $this->translate("global_required_field_marker"); ?></label>
+            	<input type="text" name="email" id="email" value="" class="" style="width:160px;" />
                 <label class='lineblocked'><a href="javascript: void(0);" class="btn btn-primary btn-mini" id='check_user_availability' title="Check Availability">Check</a></label>
                 <div id="email_error"></div><div id="email_availability_result" style="margin-top:5px;"></div>
+                <input type="hidden" name="entityname" value="Merchant" />
+                <input type="hidden" id="id" name="id" value="<?php echo encode($merchant->getID()); ?>" />
+                <input type="hidden" name="<?php echo URL_SUCCESS; ?>" value="<?php echo encode($this->baseUrl('index/addsuccess')); ?>" />
+                <input type="hidden" name="<?php echo URL_FAILURE; ?>" value="<?php echo encode($this->baseUrl('index/adderror')); ?>" />
+                <input type="hidden" name="<?php echo SUCCESS_MESSAGE; ?>" value="profile_add_success" />
+                <input type="hidden" name="createstore" value="1" />
             </td>
+        </tr>
+        <tr id="checkboxes">
+           <td colspan="2" style="padding:0;">
+           	<table class="maxwidth border0">
+            	<tr>
+                	<td style="width:25%; border:none;"><input type="checkbox" name="isapproved" id="isapproved" value="1" class="checkbox 1" checked="checked" />&nbsp;&nbsp;Auto Approve</td>
+                    <td style="width:35%; border:none;"><input type="checkbox" name="createuser" id="createuser" value="1" class="checkbox 1" />&nbsp;&nbsp;Add Store Admin User</td>
+                    <td style="border:none;"><input type="checkbox" name="createuserandinvite" id="createuserandinvite" value="1" class="checkbox 1" />&nbsp;&nbsp;Invite Store Admin</td>
+                </tr>
+            </table>	
+           </td>
         </tr>  
   </table>
 </form>

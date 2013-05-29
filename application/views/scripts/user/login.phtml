@@ -65,7 +65,7 @@ body.publicbody #contentcolumn {
                                <table class="maxwidth noborder">
                                    <?php if($sessionhaserror) { ?>
                                    <tr>			
-                                       <td><div class="alert alert-error"><?php echo $session->getVar(ERROR_MESSAGE); ?></div></td>
+                                       <td style="padding:10px 10px 0 0"><div class="alert alert-error"><?php echo $session->getVar(ERROR_MESSAGE); ?></div></td>
                                    </tr>
                                    <?php } ?>
                                    <?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>

@@ -1,0 +1,254 @@
+<?php
+	require_once APPLICATION_PATH.'/includes/header.php';
+	
+	$product = new Product();
+	$user = new UserAccount();
+	
+	$id = decode($request->id);
+	$product->populate($id);
+	$store = $product->getStore();
+	
+	$userid = $session->getVar('userid');
+	$storeid = ''; $storepath = '';
+	$user->populate($userid);
+	$storeid = $store->getID();
+	$storepath = '/storeid/'.encode($storeid);
+	$listurl = $this->baseUrl('product/list');
+	
+	if(isEmptyString($request->tab)) {
+		$request->setParam('tab', 'general');
+	}
+	
+	#in case of errors in session, populate the fields from session
+	if(!isEmptyString($session->getVar(ERROR_MESSAGE))){ 
+		$merchant->processPost($session->getVar(FORM_VALUES));		
+	}
+	
+	$posturl = $this->baseUrl("product/edit"); 
+	
+	$title = $product->getName();
+	$this->headTitle('Update Product | '.$title);
+	
+?>
+
+<script>
+$(document).ready(function() {
+	$("#profileform-general").validate({	
+		// define the validation rules one field at a time
+		rules: {
+			name: "required",
+			refno: "required",
+			price: "required",
+			categoryid: "required",
+			type: "required",
+			storeid: "required"
+		}, 
+		// the messages for each of the fields being validated
+		messages: {		
+			name: "<?php echo $this->translate("product_name_error"); ?>",
+			refno: "<?php echo $this->translate("product_refno_error"); ?>",
+			price: "<?php echo $this->translate("product_price_error"); ?>",
+			categoryid: "<?php echo $this->translate("product_category_error"); ?>",
+			type: "<?php echo $this->translate("product_type_error"); ?>",
+			storeid: "<?php echo $this->translate("product_storeid_error"); ?>"
+		},
+		// custom error positions
+		errorPlacement: function(error, element) {
+			switch(element.attr("name")){					
+				default:
+					error.appendTo("#"+element.attr("name")+"_error")
+					break;
+			}			
+		}
+	});
+	
+	// basics custom failure and success url
+	$("#profileform-general .savethenview").click(function() {
+		$("#profileform-general .successurl").val('<?php echo encode($this->baseUrl('product/view/tab/general')); ?>');
+		$("#profileform-general .failureurl").val('<?php echo encode($this->baseUrl('product/index/id/'.encode($product->getID()).'/tab/general')); ?>');
+	});
+	
+}); 
+</script>
+<style>
+
+</style>
+<div id="tabs">
+    <?php require APPLICATION_PATH."/views/scripts/product/leftcolumn.phtml"; ?>
+    <div class="span9 tab-content" id="center">   
+        <div id="general">
+            <form id="profileform-general" class="form-horizontal general" action="<?php echo $posturl; ?>" method="post">
+            <?php if($request->tab == 'general'){ ?>
+        	<div class="row makerelative" style="margin-left:0px;">
+                <?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
+                    <div class="alert alert-success clear"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
+                <?php } ?>
+                <?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
+                    <div class="alert alert-success"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
+                <?php } ?>
+                <div id="general_actions" class="makeabsolute" style="top:5px; right:20px;">
+                    <table class="table border0 nohover margin0">                       
+                       <tr>		                    
+                            <td class="padding2"><button type="submit" class="btn btn-primary savethenview"><i class="icon-ok icon-white"></i> <?php echo $this->translate('global_button_save_changes'); ?></button>
+                            </td>
+                            <td class="padding2"><a href="<?php echo $this->baseUrl('product/view/id/'.encode($product->getID())); ?>" class="btn"><i class="icon-remove"></i> <?php echo $this->translate('global_button_cancel'); ?></a>
+                            </td>
+                       </tr>
+                    </table>
+                </div>
+                <h2>Update Product > 
+                	<a href="<?php echo $this->baseUrl('product/view/id/'.encode($product->getID())); ?>"><?php echo $title; ?></a> > 
+					General 
+                </h2>
+                <span class="span6 marginleft0" style="width:98%;">
+                    <div class="well row marginleft0" style="padding-left:10px;">                        
+                        <table class="table noborder profile">                       
+							<tr>
+                                <td style="width:45%;"><label class="control-label"><?php echo $this->translate("product_name_label"); ?>: <?php echo $this->translate("global_required_field_marker"); ?></label><input type="text" name="name" id="name" class="span3" value="<?php echo $product->getName(); ?>" /><div id="name_error"></div>
+                                <input type="hidden" id="storeid" name="storeid" value="<?php echo $product->getStoreID(); ?>" /><div id="storeid_error"></div>
+                                <input type="hidden" name="entityname" value="Product" />
+                                <input type="hidden" id="id" name="id" value="<?php echo encode($product->getID()); ?>" />
+                                <input type="hidden" id="type" name="type" value="<?php echo $product->getType(); ?>" />                               
+                                <input type="hidden" class="successurl" id="<?php echo URL_SUCCESS; ?>" name="<?php echo URL_SUCCESS; ?>" title="general" />
+                                <input type="hidden" class="failureurl" id="<?php echo URL_FAILURE; ?>" name="<?php echo URL_FAILURE; ?>" title="general" />
+                                <input type="hidden" id="<?php echo SUCCESS_MESSAGE; ?>" name="<?php echo SUCCESS_MESSAGE; ?>" value="Product updated successfully" />    
+                                </td>
+                                <td><label class="control-label"><?php echo $this->translate("product_type_label"); ?>:</label>
+								<?php
+                                    /*$values = getProductTypes();*/ $values = array('1' => 'Downloads', '2' => 'Services', '3' => 'TBD');
+									echo  $values[$product->getType()];
+                                ?><div id="type_error"></div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><label class="control-label"><?php echo $this->translate("product_refno_label"); ?>:  <?php echo $this->translate("global_required_field_marker"); ?></label>
+									<input type="text" name="refno" id="refno" class="span3" value="<?php echo $product->getRefNo(); ?>" /><div id="refno_error"></div></td>
+                                <td><label class="control-label"><?php echo $this->translate("product_category_label"); ?>:  <?php echo $this->translate("global_required_field_marker"); ?></label>
+                                	<?php
+										/*$values = getProductCategories();*/ $values = array('1' => 'Category 1', '2' => 'Category 2');
+										$dropdown = new Zend_Form_Element_Select('categoryid',
+															array(
+																'multiOptions' => array_merge_maintain_keys(array('' => '<Select One>'), $values),
+																'view' => new Zend_View(),
+																'decorators' => array('ViewHelper'),
+																'class' => array('span3')
+																
+															)
+										);  
+										$dropdown->setValue($product->getCategoryID()); 
+										echo $dropdown->render();
+									?><div id="categoryid_error"></div>        
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="well lighter row marginleft0" style="padding-left:10px; margin-top:10px;">                        
+                        <table class="table noborder profile">                       
+                           <h3 class="well-legend margin0">Description</h3>
+                           	
+                        </table>
+                    </div>
+                </span> 
+        	</div>
+            <?php } ?>
+        	</form> 
+        </div>
+        <div id="spec">
+            <h2><a href="<?php echo $this->baseUrl('product/list'); ?>" title="List Products">Products</a> > 
+                <a href="<?php echo $this->baseUrl('product/view/id/'.encode($product->getID())); ?>" title="List Products"><?php echo $title; ?></a> > 
+                Specification 
+            </h2>
+            <form id="profileform-spec" class="form-horizontal spec">
+                <?php if($request->tab == 'spec'){ ?>
+                <div class="row" style="margin-left:0px;">
+                	<?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
+                        <div class="alert alert-success"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
+                    <?php } ?>
+                    <?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
+                        <div class="alert alert-success"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
+                    <?php } ?>
+                </div>
+                <?php } ?>
+            </form>
+        </div>
+         <div id="price">
+            <h2><a href="<?php echo $this->baseUrl('product/list'); ?>" title="List Products">Products</a> > 
+                <a href="<?php echo $this->baseUrl('product/view/id/'.encode($product->getID())); ?>" title="List Products"><?php echo $title; ?></a> > 
+                Price 
+            </h2>
+            <form id="profileform-price" class="form-horizontal price">
+            	<?php if($request->tab == 'price'){ ?>
+					<?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
+                        <div class="alert alert-success"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
+                    <?php } ?>  
+                    <?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
+                        <div class="alert alert-success"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
+                    <?php } ?>
+                    <div class="row" style="margin-left:0px;">
+                    
+                    </div>
+                <?php } ?>
+            </form>   	
+        </div>
+        <div id="image">
+            <h2><a href="<?php echo $this->baseUrl('product/list'); ?>" title="List Products">Products</a> > 
+                <a href="<?php echo $this->baseUrl('product/view/id/'.encode($product->getID())); ?>" title="List Products"><?php echo $title; ?></a> > 
+                Images 
+            </h2>
+            <form id="profileform-image" class="form-horizontal image">
+            	<?php if($request->tab == 'image'){ ?>
+					<?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
+                        <div class="alert alert-success"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
+                    <?php } ?>  
+                    <?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
+                        <div class="alert alert-success"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
+                    <?php } ?>
+                    <div class="row" style="margin-left:0px;">
+                    
+                    </div>
+                <?php } ?>
+            </form>   	
+        </div>
+        <div id="download">
+            <h2><a href="<?php echo $this->baseUrl('product/list'); ?>" title="List Products">Products</a> > 
+                <a href="<?php echo $this->baseUrl('product/view/id/'.encode($product->getID())); ?>" title="List Products"><?php echo $title; ?></a> > 
+                Downloads 
+            </h2>
+            <form id="profileform-download" class="form-horizontal download">
+            	<?php if($request->tab == 'download'){ ?>
+					<?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
+                        <div class="alert alert-success"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
+                    <?php } ?> 
+                    <?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
+                        <div class="alert alert-success"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
+                    <?php } ?> 
+                    <div class="row" style="margin-left:0px;">
+                    
+                    </div>
+                <?php } ?>
+            </form>   	
+        </div>
+        <div id="account">
+        	<h2><a href="<?php echo $this->baseUrl('product/list'); ?>" title="List Products">Products</a> > 
+                <a href="<?php echo $this->baseUrl('product/view/id/'.encode($product->getID())); ?>" title="List Products"><?php echo $title; ?></a> > 
+                Settings 
+            </h2>
+            <form id="profileform-farm" class="form-horizontal account">
+                <?php if($request->tab == 'account'){ ?>
+                	<?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
+                        <div class="alert alert-success"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
+                    <?php } ?> 
+                    <?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
+                        <div class="alert alert-success"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
+                    <?php } ?> 
+            		<span class="span6 marginleft0" style="width:98%;">
+                        
+                    </span>
+            	<?php } ?>
+            </form>
+        </div>
+    </div> 
+</div>
+<?php
+	require_once APPLICATION_PATH.'/includes/footer.php';
+?>
