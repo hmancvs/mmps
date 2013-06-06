@@ -27,7 +27,7 @@ class Store extends BaseEntity  {
 		$this->addDateFields(array('dateapproved'));
 		// set the custom error messages
 		$this->addCustomErrorMessages(array(
-										"name.notblank" => $this->translate->_("merchant_-storename_error")
+										"name.notblank" => $this->translate->_("merchant_storename_error")
        	       						));     
 	}
 	/*

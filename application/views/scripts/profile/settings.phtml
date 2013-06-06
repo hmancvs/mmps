@@ -1,12 +1,20 @@
 <div id="account">
-            <h2>Account Settings</h2>
+            <?php if($userid != $user->getID()){ ?>
+                <h2><a href="<?php echo $this->baseUrl('profile/list'); ?>" title="List Products">Users</a> > 
+                    <a href="<?php echo $this->baseUrl('profile/view/id/'.encode($user->getID())); ?>"><?php echo $title; ?></a> >
+                    Account Settings
+                </h2>
+            <?php } else { ?>
+                <h2><a href="<?php echo $this->baseUrl('profile/view/id/'.encode($user->getID())); ?>">My Profile</a> > Settings</h2>
+            <?php } ?>
             <form id="profileform-account" class="form-horizontal account">
                 <?php if($request->tab == 'account'){ ?>
-                <?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
-                    <div class="alert alert-success"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
+                
+				<?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
+                    <div class="alert alert-success clear"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
                 <?php } ?>
                 <?php if($sessionhaserror) { ?>
-                    <div class="alert alert-error"><?php echo $session->getVar(ERROR_MESSAGE); ?></div>
+                    <div class="alert alert-error clear"><?php echo $session->getVar(ERROR_MESSAGE); ?></div>
                 <?php } ?> 
                 <div class="row" style="margin-left:0px;">
                     <span class="span6 marginleft0" style="width:97%;">

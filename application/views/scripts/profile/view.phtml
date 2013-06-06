@@ -173,22 +173,23 @@ $(document).ready(function() {
 	
 }
 </style>
-<?php if(!isSubscriber()){ ?>
-<h1><?php echo $title; ?></h1>
-<?php } ?>
 <div id="tabs">
-    <?php require APPLICATION_PATH."/views/scripts/profile/profileleftcolumn.phtml"; ?>
+    <?php require APPLICATION_PATH."/views/scripts/profile/leftcolumn.phtml"; ?>
     <div class="span9 tab-content" id="center">   
         <div id="basics">
             <form id="profileform-basics" class="form-horizontal basics">
             <?php if($request->tab == 'basics'){ ?>
-            <?php if(isSubscriber()){ ?>
-            <h2 class="calfont title">My Profile</h2>
+           	<?php if($userid != $user->getID()){ ?>
+                <h2><a href="<?php echo $this->baseUrl('profile/list'); ?>" title="List Users">Users</a> > 
+                    <a href="<?php echo $this->baseUrl('profile/view/id/'.encode($user->getID())); ?>"><?php echo $title; ?></a>
+                </h2>
+            <?php } else { ?>
+                <h2><a href="<?php echo $this->baseUrl('profile/view/id/'.encode($user->getID())); ?>">My Profile</a></h2>
+            <?php } ?>
+            <?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
+                <div class="alert alert-success clear"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
             <?php } ?>
         	<div class="row" style="margin-left:0px;">
-                <?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
-                    <div class="alert alert-success"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
-                <?php } ?>
                 <span class="span6 marginleft0" style="width:70%;">
                     <div class="well row marginleft0" style="min-height:250px; padding-left:10px;">                        
                         <table class="table noborder profile">                       
@@ -279,8 +280,10 @@ $(document).ready(function() {
                           			<a class="btn btn-primary" style="" href="<?php echo $this->baseUrl('profile/index/id/'.encode($id)); ?>" id="update"><i class="icon-pencil icon-white"></i> Update Profile</a> &nbsp;
                                 <?php } ?>
                                 <?php if(isAdmin()){ ?>
+                                	<?php if($user->getID() != $userid){ ?>
                                 	<a style="display:inline-block; "href="javascript: void(0)" id="deleteline_multiple" title="Delete Entry" class="btn btn-mini deleteline noimgbutton" action="<?php echo $this->baseUrl('profile/delete/id/'.$user->getID()."/entityname/Profile/successurl/".encode($this->baseUrl('profile/list'))); ?>"><i class="icon-trash"></i></a>
-                                    <a class="btn btn-primary" style="" href="<?php echo $this->baseUrl('profile/list'); ?>" title="List Customers"><i class="icon-list icon-white"></i> Customers</a> &nbsp;
+                                    <?php } ?>
+                                    <a class="btn btn-primary" style="" href="<?php echo $this->baseUrl('profile/list'); ?>" title="List Customers"><i class="icon-list icon-white"></i> Users</a> &nbsp;
                                 <?php } ?>
                               	</td>
                            </tr>
@@ -296,40 +299,7 @@ $(document).ready(function() {
         	</form> 
         </div>
         <?php if(isSubscriber()){ ?>
-            <div id="contacts">
-                <h2>Payment History</h2>
-                <form id="profileform-contacts" class="form-horizontal contacts">
-                    <?php if($request->tab == 'contacts'){ ?>
-                    <div class="row" style="margin-left:0px;">
-                        <?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
-                            <div class="alert alert-success"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
-                        <?php } ?>
-                        
-                    </div>
-                    <?php } ?>
-                </form>
-            </div>
-            <div id="personal">
-                <h2>My Downloads</h2>
-                <form id="profileform-personal" class="form-horizontal personal">
-                    <?php if($request->tab == 'personal'){ ?>
-                    <?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
-                        <div class="alert alert-success"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
-                    <?php } ?>  
-                    <div class="row" style="margin-left:0px;">
-                    
-                    </div>
-                    <?php } ?>
-                </form>   	
-            </div>
-            <div id="farm">
-                <h2>Watch List</h2>
-                <form id="profileform-farm" class="form-horizontal farm">
-                    <?php if($request->tab == 'farm'){ ?>
-                        
-                    <?php } ?>
-                </form>
-            </div>
+            
         <?php } ?>
         <?php if(isMerchant()){ ?>
         	<div id="contacts">

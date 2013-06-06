@@ -6,7 +6,7 @@
 	if(!isEmptyString($storeid)){
 		$product->setStoreID($storeid);
 	}
-	// $product->setType(1);
+	$product->setType(1);
 	
 	#in case of errors in session, populate the fields from session
 	if(!isEmptyString($session->getVar(ERROR_MESSAGE))){ 
@@ -22,7 +22,7 @@
 			rules: {
 				name: "required",
 				refno: "required",
-				price: "required",
+				cost: "required",
 				categoryid: "required",
 				type: "required",
 				storeid: "required"
@@ -31,7 +31,7 @@
 			messages: {		
 				name: "<?php echo $this->translate("product_name_error"); ?>",
 				refno: "<?php echo $this->translate("product_refno_error"); ?>",
-				price: "<?php echo $this->translate("product_price_error"); ?>",
+				cost: "<?php echo $this->translate("product_cost_error"); ?>",
 				categoryid: "<?php echo $this->translate("product_category_error"); ?>",
 				type: "<?php echo $this->translate("product_type_error"); ?>",
 				storeid: "<?php echo $this->translate("product_storeid_error"); ?>"
@@ -70,37 +70,19 @@ body {
             <td style="width:20%;"><label class="control-label"><?php echo $this->translate("product_type_label"); ?>: <?php echo $this->translate("global_required_field_marker"); ?></label></td>
             <td>
             	<?php
-                    /*$values = getProductTypes();*/ $values = array('1' => 'Downloads', '2' => 'Services', '3' => 'TBD');
+                    $values = getProductTypes();
                     $dropdown = new Zend_Form_Element_Select('type',
                                         array(
                                             'multiOptions' => array_merge_maintain_keys(array('' => '<Select One>'), $values),
                                             'view' => new Zend_View(),
                                             'decorators' => array('ViewHelper'),
-                                            'class' => array('span2')
+                                            'class' => array('width200')
 											
                                         )
                     );  
                     $dropdown->setValue($product->getType()); 
                     echo $dropdown->render();
                 ?><div id="type_error"></div>
-            </td>
-        </tr>
-        <tr>
-            <td><label class="control-label"><?php echo $this->translate("product_category_label"); ?>: <?php echo $this->translate("global_required_field_marker"); ?></label></td>
-            <td><?php
-                    /*$values = getProductCategories();*/ $values = array('1' => 'Category 1', '2' => 'Category 2');
-                    $dropdown = new Zend_Form_Element_Select('categoryid',
-                                        array(
-                                            'multiOptions' => array_merge_maintain_keys(array('' => '<Select One>'), $values),
-                                            'view' => new Zend_View(),
-                                            'decorators' => array('ViewHelper'),
-                                            'class' => array('span3')
-											
-                                        )
-                    );  
-                    $dropdown->setValue(''); 
-                    echo $dropdown->render();
-                ?><div id="categoryid_error"></div>
             </td>
         </tr>
         <tr>
@@ -112,8 +94,8 @@ body {
         	<td><input type="text" name="refno" id="refno" class="span3" value="" /><div id="refno_error"></div></td>
         </tr>
          <tr>
-            <td><label class="control-label"><?php echo $this->translate("product_price_label"); ?>: <?php echo $this->translate("global_required_field_marker"); ?></label></td>
-        	<td><input type="text" name="price" id="price" class="span2" value="" /><div id="price_error"></div></td>
+            <td><label class="control-label">Cost<?php // echo $this->translate("product_price_label"); ?>: <?php echo $this->translate("global_required_field_marker"); ?></label></td>
+        	<td><input type="text" name="cost" id="cost" class="span2" value="" /><div id="cost_error"></div></td>
         </tr>
         <?php if(isAdmin()){ ?>
         <tr>

@@ -35,7 +35,7 @@ $(document).ready(function() {
 			if(controller == 'product' && action == 'index'){
 				var url = "<?php echo $this->baseUrl("product/index/id/".encode($product->getID())."/tab/"); ?>"+currentclass;
 			}
-			if((controller == 'product' && action == 'view') || currentclass == image || currentclass == download || currentclass == download){
+			if((controller == 'product' && action == 'view') || currentclass == 'categories' || currentclass == 'image'){
 				var url = "<?php echo $this->baseUrl("product/view/id/".encode($product->getID())."/tab/"); ?>"+currentclass;
 			}
 			if(!isEmptyString(url)){
@@ -58,9 +58,12 @@ $(document).ready(function() {
     <ul id="leftnav" style="width:97%;">
         <li id="tab_general"><a href="#general" class="general">General</a></li>
         <li id="tab_spec"><a href="#spec" class="spec">Specification</a></li>
-        <li id="tab_price"><a href="#price" class="price">Price</a></li>
+        <li id="tab_categories"><a href="#categories" class="categories">Categories</a></li>
+        <li id="tab_prices"><a href="#prices" class="prices">Price</a></li>
         <li id="tab_image"><a href="#image" class="image">Images</a></li>
-        <li id="tab_download"><a href="#download" class="download">Downloads</a></li>
+        <?php if($product->isDownloadable()){ ?>
+        	<li id="tab_download"><a href="#download" class="download">Downloads</a></li>
+        <?php } ?>
         <li id="tab_account"><a href="#account" class="account">Settings</a></li>   
     </ul>
 </div>

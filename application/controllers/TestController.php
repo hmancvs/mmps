@@ -82,33 +82,7 @@ class TestController extends IndexController  {
 		
 		    "status" => 1,
 		    "dateapproved" => "2013-05-26 18:00:54",
-		    "approvedbyid" => 1,
-		    "admins" => array
-		        (
-		            "0" => array
-		                (
-		                    "createdby" => 1,
-		                    "firstname" => "Nuimber Olka",
-		                    "lastname" => ".",
-		                    "email" => "test4@devmail.infomacorp.com",
-		                    "phone" => 256703595279,
-		                    "type" => 3,
-		                    "isactive" => 0,
-		                    "agreedtoterms" => 0,
-		                    "usergroups" => array
-		                        (
-		                            "0" => array
-		                                (
-		                                    "groupid" => 3
-		                                )
-		
-		                        ),
-		                    "isinvited" => 1,
-		                    "invitedbyid" => 1,
-		                    "dateinvited" => "2013-05-26"
-		                )
-		
-		        )
+		    "approvedbyid" => 1
 	    );
 	    
 	    $merchant = new Merchant();
@@ -117,6 +91,8 @@ class TestController extends IndexController  {
 	   	debugMessage('error is '.$merchant->getErrorStackAsString());
 	    try {
 	    	$merchant->save();
+	    	$merchant->afterSave();
+	    	
 	    } catch (Exception $e) {
 	    	debugMessage('errors '.$e->getMessage());
 	    	debugMessage('error is '.$merchant->getErrorStackAsString());

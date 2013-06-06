@@ -7,19 +7,23 @@
     	<h2 id="quicklink">Quick Links</h2>
         <ul class="nav nav-tabs nav-stacked leftnav" id="leftnav">
         <?php if(isAdmin()){ ?>
-        	<li><a href="<?php echo $this->baseUrl('profile/list'); ?>"><i class="icon-list icon-white"></i> Customer Directory</a></li>
+        	<li><a href="<?php echo $this->baseUrl('profile/list'); ?>"><i class="icon-list icon-white"></i> User Directory</a></li>
             <li><a href="<?php echo $this->baseUrl('merchant/list/pending/1'); ?>"><i class="icon-list icon-white"></i> Merchants For Approval</a></li>
             <li><a href="<?php echo $this->baseUrl('merchant/list'); ?>"><i class="icon-list icon-white"></i> Merchant Directory</a></li>
             <li><a href="<?php echo $this->baseUrl('product/list'); ?>"><i class="icon-list icon-white"></i> Product List</a></li>
+            <li><a href="#<?php //echo $this->baseUrl('product/list'); ?>"><i class="icon-list icon-white"></i> Manage Categories</a></li>
 			<li><a href="#" class="" id=""><i class="icon-list icon-white"></i> TBD</a></li>
         <?php } ?>
         <?php if(isMerchant()){ ?>
         	<li><a href="<?php echo $this->baseUrl('product/list'); ?>"><i class="icon-list icon-white"></i> Product List</a></li>
-			<li><a href="#" class="" id=""><i class="icon-list icon-white"></i> TBD</a></li>
+			<li><a href="#<?php //echo $this->baseUrl('profile/view'); ?>"><i class="icon-list icon-white"></i> Customer Payments</a></li>
+            <li><a href="#" class="" id=""><i class="icon-list icon-white"></i> TBD</a></li>
         <?php } ?>
 		<?php if(isSubscriber()){ ?>
         	<li><a href="<?php echo $this->baseUrl('profile/view'); ?>"><i class="icon-list icon-white"></i> My Profile</a></li>
-        	<li><a href="#" class="" id=""><i class="icon-list icon-white"></i> TBD</a></li>
+            <li><a href="#<?php //echo $this->baseUrl('profile/view'); ?>"><i class="icon-list icon-white"></i> Payment History</a></li>
+            <li><a href="#<?php //echo $this->baseUrl('profile/view'); ?>"><i class="icon-list icon-white"></i> My Downloads</a></li>
+            <li><a href="#<?php //echo $this->baseUrl('profile/view'); ?>"><i class="icon-list icon-white"></i> Watch List</a></li>
         <?php } ?>
         </ul>
     </div>

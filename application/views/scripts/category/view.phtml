@@ -1,0 +1,332 @@
+<?php
+	require_once APPLICATION_PATH.'/includes/header.php';
+	
+	$product = new Product();
+	$user = new UserAccount();
+	
+	$id = decode($request->id);
+	$product->populate($id);
+	$store = $product->getStore();
+	
+	$userid = $session->getVar('userid');
+	$storeid = ''; $storepath = '';
+	$user->populate($userid);
+	$storeid = $store->getID();
+	$storepath = '/storeid/'.encode($storeid);
+	$listurl = $this->baseUrl('product/list');
+	
+	if(isEmptyString($request->tab)) {
+		$request->setParam('tab', 'general');
+	}
+	
+	$title = $product->getName();
+	$this->headTitle('Product | '.$title);
+	
+?>
+
+<script>
+$(document).ready(function() {
+	
+	
+}); 
+</script>
+<style>
+#tabs form {
+	width:98%;
+}
+#tabs .alert.alert-success, #tabs .alert.alert-error {
+	width:90%;
+	margin-bottom:0;
+}
+</style>
+<div id="tabs">
+    <?php require APPLICATION_PATH."/views/scripts/product/leftcolumn.phtml"; ?>
+    <div class="span9 tab-content" id="center">
+		<?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
+            <div class="alert alert-success clear"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
+        <?php } ?>
+        <div id="general">
+            <form id="profileform-general" class="form-horizontal general">
+            <?php if($request->tab == 'general'){ ?>
+        	<div class="row makerelative" style="margin-left:0px;">
+                <div id="general_actions" class="makeabsolute" style="top:5px; right:20px;">
+                    <table class="table border0 nohover margin0">                       
+                       <tr>		                    
+                            <?php if(isAdmin() || isMerchant()){ ?>
+                                <td class="padding2"><a class="btn btn-primary" href="<?php echo $this->baseUrl('product/index/id/'.encode($id)); ?>" id="update"><i class="icon-pencil icon-white"></i> Update</a></td>
+                            	<td class="padding2"><a href="<?php echo $this->baseUrl('product/add/pgc/true'.$storepath); ?>" class="addpopup addproduct noimglink btn" title="New Product" rel="New Product" id="newproduct" formtitle="indexform" successurl="<?php echo $this->baseUrl('product/addsuccess'); ?>" action="<?php echo $this->baseUrl("product/create"); ?>"><i class="icon-plus"></i></a></td>
+                                <td class="padding2"><a href="javascript: void(0)" id="deleteline" title="Delete Entry" class="btn deleteline noimgbutton" action="<?php echo $this->baseUrl('product/delete/id/'.$product->getID()."/entityname/Product/successurl/".encode($listurl)); ?>"><i class="icon-trash"></i></a>
+                                </td>
+                            <?php } ?>
+                       </tr>
+                    </table>
+                </div>
+                <h2><a href="<?php echo $this->baseUrl('product/list'); ?>" title="List Products">Products</a> > 
+                	<a href="<?php echo $this->baseUrl('product/view/id/'.encode($product->getID())); ?>"><?php echo $title; ?></a> > 
+					General 
+                </h2>
+                <span class="span6 marginleft0" style="width:98%;">
+                    <div class="well row marginleft0" style="padding-left:10px;">                        
+                        <table class="table noborder profile">                       
+							<tr>
+                                <td style="width:45%;"><label class="control-label"><?php echo $this->translate("product_name_label"); ?>:</label><?php echo $product->getName(); ?></td>
+                                <td><label class="control-label"><?php echo $this->translate("product_type_label"); ?>:</label>
+									<?php echo getProductTypes($product->getType()); ?></td>
+                            </tr>
+                            <tr>
+                                <td colspan="2"><label class="control-label">Description<?php //echo $this->translate("product_refno_label"); ?>:</label>
+									<?php echo $product->getdescription(); ?>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </span> 
+        	</div>
+            <?php } ?>
+        	</form> 
+        </div>
+        <div id="spec">
+            <h2><a href="<?php echo $this->baseUrl('product/list'); ?>" title="List Products">Products</a> > 
+                <a href="<?php echo $this->baseUrl('product/view/id/'.encode($product->getID())); ?>"><?php echo $title; ?></a> > 
+                Specification 
+            </h2>
+            <form id="profileform-spec" class="form-horizontal spec">
+                <?php if($request->tab == 'spec'){ ?>
+                    <div class="row makerelative" style="margin-left:0px;">
+                        <div id="spec_actions" class="makeabsolute" style="top:5px; right:20px;">
+                            <table class="table border0 nohover margin0">                       
+                               <tr>		                    
+                                    <?php if(isAdmin() || isMerchant()){ ?>
+                                        <td class="padding2"><a class="btn btn-primary" href="<?php echo $this->baseUrl('product/index/id/'.encode($id).'/tab/spec'); ?>" id="update"><i class="icon-pencil icon-white"></i> Update</a></td>
+                                    <?php } ?>
+                               </tr>
+                            </table>
+                        </div>
+                        
+                        <span class="span6 margin0" style="width:98%;">
+                            <div class="well row margin0" style="padding-left:10px;"> 
+                                <table class="table noborder">                       
+                                    <tr>
+                                        <td colspan="2"><label class="control-label"><?php echo $this->translate("product_refno_label"); ?>:  <?php echo $this->translate("global_required_field_marker"); ?></label><?php echo $product->getRefNo(); ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="2"><label class="control-label">Model<?php //echo $this->translate("product_refno_label"); ?>:</label><?php echo $product->getModel(); ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="2"><label class="control-label">Serial No<?php //echo $this->translate("product_category_label"); ?>:</label><?php echo $product->getserialno(); ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="2"><label class="control-label">Manufacturer<?php //echo $this->translate("product_refno_label"); ?>:</label><?php echo $product->getmanufacturer(); ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="2"><label class="control-label">Dimensions<?php //echo $this->translate("product_refno_label"); ?>:</label>
+                                        	<?php $dim_unit = getDimensionUnits($product->getdimensionunit()); ?>
+                                            <table class="table table-condesed border0 nohover margin0">
+                                                <tr>
+                                                    <td style="width:75px; padding-left:0;"><label class="blocked">Length</label>
+                                                        <?php echo clean_num($product->getlength()); ?> (<?php echo $dim_unit; ?>) 
+                                                    </td> 
+                                                    <td style="width:75px; padding-left:0;"><label class="blocked">Width</label>
+                                                        <?php echo clean_num($product->getwidth()); ?> (<?php echo $dim_unit; ?>) 
+                                                    </td>
+                                                    <td style="width:75px; padding-left:0;"><label class="blocked">Height</label>
+                                                        <?php echo clean_num($product->getheight()); ?> (<?php echo $dim_unit; ?>)
+                                                    </td> 
+                                                    <td></td>
+                                                  </tr>
+                                             </table>
+                                             <table class="table table-condesed border0 nohover margin0">
+                                                <tr>
+                                                    <td style="width:70px; padding-left:0;"><label class="blocked">Weight</label>
+														<?php echo clean_num($product->getweight()); ?> (<?php echo getWeightUnits($product->getweightunit()); ?>)</td> 
+                                                    <td></td>
+                                                </tr>
+                                             </table>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="well row marginleft0" style="min-height:200px; width:97%; margin-top:10px;">
+                                <h3 class="well-legend">Custom Attributes</h3>
+                                <table class="table table-stripped table-bordered hasheader" style="margin-top:15px;">
+                                    <thead>
+                                        <tr class="rowheader">
+                                            <td style="width:40%;">Attribute<?php // echo $this->translate("season_input_type_label"); ?></td>
+                                            <td>Value<?php // echo $this->translate("season_input_name_label"); ?></td>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php 
+                                            $prodetails = $product->getAllAttributes();
+                                            $nooflines = $prodetails->count();
+                                            foreach($prodetails as $attribute){
+                                        ?>
+                                        <tr>
+                                            <td><?php echo $attribute->getField(); ?></td>
+                                            <td><?php echo $attribute->getValue(); ?></td>
+                                        </tr>
+                                        <?php } ?>
+                                    </tbody>               
+                                </table>
+                            </div>
+                        </span>
+                     </div>
+                <?php } ?>
+            </form>
+        </div>
+        <div id="categories">
+            <h2><a href="<?php echo $this->baseUrl('product/list'); ?>" title="List Products">Products</a> > 
+                <a href="<?php echo $this->baseUrl('product/view/id/'.encode($product->getID())); ?>" title="List Products"><?php echo $title; ?></a> > 
+                Categories 
+            </h2>
+            <form id="profileform-categories" class="form-horizontal categories">
+            	<?php if($request->tab == 'categories'){ ?>
+                	 <div class="row makerelative" style="margin-left:0px;">
+                        <div id="spec_actions" class="makeabsolute" style="top:-40px; right:20px;">
+                            <table class="table border0 nohover margin0">                       
+                               <tr>		                    
+								<?php if(isAdmin() || isMerchant()){ ?>
+                                    <td class="padding2"><button type="submit" class="btn btn-primary savethenview" title="<?php echo $this->translate('global_button_save'); ?>"><i class="icon-ok icon-white"></i> <?php echo $this->translate('global_button_save_changes'); ?></button>
+                                     <td class="padding2"><a href="<?php echo $this->baseUrl('category/add/pgc/true/userid/'.$userid); ?>" class="addpopup addproduct btn" title="New Category" rel="New Category" id="newcategory" formtitle="indexform" successurl="<?php echo $this->baseUrl('category/addsuccess'); ?>" action="<?php echo $this->baseUrl("category/create"); ?>"><i class="icon-plus"></i> New</a></td>
+                                <?php } ?>
+                                   
+                               </tr>
+                            </table>
+                        </div>
+					<link rel="stylesheet" href="<?php echo $this->baseUrl('javascript/custom/jqwidgets/jqwidgets/styles/jqx.base.css') ?>" type="text/css" />
+					<script type="text/javascript" src="<?php echo $this->baseUrl('javascript/custom/jqwidgets/scripts/gettheme.js') ?>"></script>
+                    <script type="text/javascript" src="<?php echo $this->baseUrl('javascript/custom/jqwidgets/jqwidgets/jqxcore.js') ?>"></script>
+                    <script type="text/javascript" src="<?php echo $this->baseUrl('javascript/custom/jqwidgets/jqwidgets/jqxbuttons.js') ?>"></script>
+                    <script type="text/javascript" src="<?php echo $this->baseUrl('javascript/custom/jqwidgets/jqwidgets/jqxscrollbar.js') ?>"></script>
+                    <script type="text/javascript" src="<?php echo $this->baseUrl('javascript/custom/jqwidgets/jqwidgets/jqxpanel.js') ?>"></script>
+                    <script type="text/javascript" src="<?php echo $this->baseUrl('javascript/custom/jqwidgets/jqwidgets/jqxtree.js') ?>"></script>
+                    <script type="text/javascript" src="<?php echo $this->baseUrl('javascript/custom/jqwidgets/jqwidgets/jqxcheckbox.js') ?>"></script>
+                    <script type="text/javascript">
+						$(document).ready(function () {
+							// Create jqxTree 
+							var theme = getDemoTheme();
+							// create jqxTree
+							$('#jqxTree').jqxTree({height: '500px', checkboxes: true, width: '500px', theme: theme });
+							$("#jqxTree").jqxTree('selectItem', $("#home")[0]);
+							
+						});
+					</script>
+					<style>
+                    	#tabs .jqx-tree-dropdown {
+							margin-left:25px;
+						}
+                    </style>
+                    <span class="margin0" style="width:94%;">
+                        <div class="well row margin0" style="padding-left:10px;"> 
+                            <table class="table noborder">
+                            	<tr>
+                                	<td><label class="control-label" style="padding:10px; font-weight:normal;">Select the checkbox next to categories that apply and click <b>'Save Changes'</b>. To add new sub categories, click <b>'New'</b></label>
+                                		<div id='jqxWidget'>
+                                            <div style='float: left;'>
+                                                <div id='jqxTree' style='float: left; margin-left: 20px;'>
+                                                    <ul>
+                                                        <li id='home' item-checked='true' item-expanded='true'><?php echo $product->getCategory()->getName(); ?>
+                                                        	<ul>
+                                                                <?php 
+																	$level1_categories = getLevelTwoCategories($userid);
+																?>
+                                                                <?php 
+																	foreach($level1_categories as $key => $value){
+																		$level2_categories = getLevelThreeCategories($userid, $key);
+																		$check1_result = $product->getCategoryEntry($key);
+																		if($check1_result->count() > 0){
+																			$ischeck1 = 1; 
+																		} else {
+																			$ischeck1 = 0;
+																		}
+																		
+																?>
+                                                                	<li item-expanded='true' <?php echo $ischeck1 == 1 ? "item-checked='true'" : "item-checked='false'"; ?>><?php echo $value; ?>
+                                                                    	<?php if(count($level2_categories) > 0){ ?>
+																			<ul>
+																			<?php 
+                                                                                foreach($level2_categories as $skey => $svalue){
+																					$check2_result = $product->getCategoryEntry($skey);
+																					if($check2_result->count() > 0){
+																						$ischeck2 = 1; 
+																					} else {
+																						$ischeck2 = 0;
+																					}
+                                                                            ?>
+                                                                                <li <?php echo $ischeck2 == 1 ? "item-checked='true'" : "item-checked='false'"; ?>><?php echo $svalue; ?></li>
+                                                                            <?php } ?>
+                                                                            </ul>
+                                                                         <?php } ?>  
+                                                                    </li>
+                                                                <?php } ?>
+                                                            </ul>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                	</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </span>
+                <?php } ?>
+            </form>
+        </div>
+        <div id="prices">
+            <h2><a href="<?php echo $this->baseUrl('product/list'); ?>" title="List Products">Products</a> > 
+                <a href="<?php echo $this->baseUrl('product/view/id/'.encode($product->getID())); ?>"><?php echo $title; ?></a> > 
+                Price 
+            </h2>
+            <form id="profileform-prices" class="form-horizontal prices">
+            	<?php if($request->tab == 'prices'){ ?>
+                    <div class="row" style="margin-left:0px;">
+                    
+                    </div>
+                <?php } ?>
+            </form>   	
+        </div>
+        <div id="image">
+            <h2><a href="<?php echo $this->baseUrl('product/list'); ?>" title="List Products">Products</a> > 
+                <a href="<?php echo $this->baseUrl('product/view/id/'.encode($product->getID())); ?>"><?php echo $title; ?></a> > 
+                Images 
+            </h2>
+            <form id="profileform-image" class="form-horizontal image">
+            	<?php if($request->tab == 'image'){ ?>
+                    <div class="row" style="margin-left:0px;">
+                    
+                    </div>
+                <?php } ?>
+            </form>   	
+        </div>
+        <div id="download">
+            <h2><a href="<?php echo $this->baseUrl('product/list'); ?>" title="List Products">Products</a> > 
+                <a href="<?php echo $this->baseUrl('product/view/id/'.encode($product->getID())); ?>"><?php echo $title; ?></a> > 
+                Downloads 
+            </h2>
+            <form id="profileform-download" class="form-horizontal download">
+            	<?php if($request->tab == 'download'){ ?>
+                    <div class="row" style="margin-left:0px;">
+                    
+                    </div>
+                <?php } ?>
+            </form>   	
+        </div>
+        <div id="account">
+        	<h2><a href="<?php echo $this->baseUrl('product/list'); ?>" title="List Products">Products</a> > 
+                <a href="<?php echo $this->baseUrl('product/view/id/'.encode($product->getID())); ?>"><?php echo $title; ?></a> > 
+                Settings 
+            </h2>
+            <form id="profileform-farm" class="form-horizontal account">
+                <?php if($request->tab == 'account'){ ?>
+            		<span class="span6 marginleft0" style="width:98%;">
+                        
+                    </span>
+            	<?php } ?>
+            </form>
+        </div>
+    </div> 
+</div>
+<?php
+	require_once APPLICATION_PATH.'/includes/footer.php';
+?>

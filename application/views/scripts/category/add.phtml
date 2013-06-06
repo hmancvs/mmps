@@ -1,0 +1,100 @@
+<?php
+	require_once APPLICATION_PATH.'/includes/header.php';
+	
+	$category = new Category();
+	$productid = decode($request->pid);
+	if(!isEmptyString($productid)){
+		$product = new Product();
+		$product->populate($productid);
+		$userid = $product->getStore()->getMerchant()->getAdmin()->getID();
+		$category->setCreatedBy($userid);
+		$category->setParentID($product->getCategoryID());
+	}
+	// $product->setType(1);
+	
+	#in case of errors in session, populate the fields from session
+	if(!isEmptyString($session->getVar(ERROR_MESSAGE))){ 
+		$category->processPost($session->getVar(FORM_VALUES));	
+	}
+	
+?>
+<script>
+	$(document).ready(function() {
+		$("#indexform").validate({		
+			// define the validation rules one field at a time
+			rules: {
+				name: "required"
+			}, 
+			// the messages for each of the fields being validated
+			messages: {		
+				name: "<?php echo $this->translate("global_name_error"); ?>"
+			},
+			// custom error positions
+			errorPlacement: function(error, element) {
+				switch(element.attr("name")){					
+					default:
+						error.appendTo("#"+element.attr("name")+"_error")
+						break;
+				}			
+			}
+		});
+		
+	}); 
+</script>
+<style>
+body {
+	overflow:hidden;
+}
+</style>
+<div class="popupdiv">
+<form class="form-horizontal well span6" id="indexform" action="<?php echo $this->baseUrl("category/create"); ?>" method="post">
+	<input type="hidden" name="entityname" value="Category" />
+    <input type="hidden" id="id" name="id" value="<?php echo encode($category->getID()); ?>" />
+    <input type="hidden" id="storeid" name="storeid" value="<?php echo $product->getStoreID(); ?>" />
+    <input type="hidden" id="productid" name="productid" value="<?php echo $product->getID(); ?>" />
+    <input type="hidden" id="type" name="type" value="2" />
+    <input type="hidden" id="level" name="level" value="2" />
+    <input type="hidden" name="<?php echo SUCCESS_MESSAGE; ?>" value="global_save_success" />
+    <input type="hidden" name="<?php echo URL_SUCCESS; ?>" value="<?php echo encode($this->baseUrl('index/addsuccess')); ?>" />
+    <input type="hidden" name="<?php echo URL_FAILURE; ?>" value="<?php echo encode($this->baseUrl('index/adderror')); ?>" />
+    <table class="table">
+		<?php if($sessionhaserror) { ?>
+	        <tr>
+	        	<td colspan="2"><div class="alert alert-error"><?php echo $session->getVar(ERROR_MESSAGE); ?></div></td>
+	        </tr>
+        <?php } ?>
+        <tr>
+            <td><label class="control-label"><?php echo $this->translate("global_name_label"); ?>: <?php echo $this->translate("global_required_field_marker"); ?></label></td>
+        	<td><input type="text" name="name" id="name" class="span3" value="" /><div id="name_error"></div></td>
+        </tr>
+        <tr>
+            <td style="width:20%;"><label class="control-label">Parent Category<?php //echo $this->translate("global_name_label"); ?>:</label></td>
+            <td>
+            	<?php
+					// debugMessage();
+                    $values = array_merge_maintain_keys(array($product->getStore()->getMerchant()->getCategoryID() => $product->getStore()->getMerchant()->getCategory()->getName()), getLevelTwoCategories($userid));
+                    $dropdown = new Zend_Form_Element_Select('parentid',
+                                        array(
+                                            'multiOptions' => $values,
+                                            'view' => new Zend_View(),
+                                            'decorators' => array('ViewHelper'),
+                                            'class' => array('span3')
+											
+                                        )
+                    );  
+                    $dropdown->setValue($category->getParentID()); 
+                    echo $dropdown->render();
+                ?><div id="type_error"></div>
+            </td>
+        </tr>
+        <tr>
+        	<td></td>
+            <td style=""><input type="checkbox" id="addtoproduct" name="addtoproduct" value="1" checked="checked" /> &nbsp;
+            	<label class="control-label" style="font-weight:normal; width:auto; display:inline-block;">Add this category to <b><?php echo $product->getName(); ?></b></label></td>
+        </tr>
+  </table>
+</form>
+</div>
+<?php
+	require_once APPLICATION_PATH.'/includes/footer.php';
+?>

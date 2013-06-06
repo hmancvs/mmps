@@ -164,7 +164,7 @@ $(document).ready(function() {
                                 <td>
                                     <label class="control-label"><?php echo $this->translate("merchant_category_label"); ?>: <?php echo $this->translate("global_required_field_marker"); ?></label></label>
                                     <?php
-                                        $allcats = getBusinessCategories();
+                                        $allcats = getLevelOneCategories();
                                         $dropdown = new Zend_Form_Element_Select('category',
                                                             array(
                                                                 'multiOptions' => array_merge_maintain_keys(array('' => '<Select One>'), $allcats),

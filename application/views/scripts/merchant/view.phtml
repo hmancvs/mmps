@@ -62,7 +62,7 @@ $(document).ready(function() {
                         <table class="table noborder profile">                       
 							<tr>
                                 <td style="width:45%;"><label class="control-label"><?php echo $this->translate("merchant_type_label"); ?>:</label><?php echo getMerchantType($merchant->getType()); ?></td>
-                                <td><label class="control-label"><?php echo $this->translate("merchant_category_label"); ?>:</label><?php echo getBusinessCategories($merchant->getcategory()); ?></td>
+                                <td><label class="control-label"><?php echo $this->translate("merchant_category_label"); ?>:</label><?php echo getLevelOneCategories($merchant->getcategory()); ?></td>
                             </tr>
                             <tr>
                                 <td><label class="control-label"><?php echo $this->translate("merchant_storename_label"); ?>:</label><?php echo $store->getName(); ?></td>

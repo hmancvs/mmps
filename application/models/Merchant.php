@@ -10,7 +10,7 @@ class Merchant extends BaseEntity  {
 		$this->setTableName('merchant');
 		
 		$this->hasColumn('type', 'integer', null, array( 'notnull' => true, 'notblank' => true, 'default' => '1'));
-		$this->hasColumn('category', 'integer', null, array( 'notnull' => true, 'notblank' => true));
+		$this->hasColumn('categoryid', 'integer', null, array( 'notnull' => true, 'notblank' => true));
 		$this->hasColumn('firstname', 'string', 255);
 		$this->hasColumn('lastname', 'string', 255);
 		$this->hasColumn('orgname', 'string', 255);
@@ -75,6 +75,12 @@ class Merchant extends BaseEntity  {
 									'foreign' => 'id'
 								)
 						);
+		$this->hasOne('Category as category', 
+								array(
+									'local' => 'categoryid',
+									'foreign' => 'id'
+								)
+						);
 		$this->hasMany('Store as stores',
 						 array(
 								'local' => 'id',
@@ -98,9 +104,9 @@ class Merchant extends BaseEntity  {
 		if($this->usernameExists()){
 			$this->getErrorStack()->add("username.unique", sprintf($this->translate->_("useraccount_username_unique_error"), $this->getStore()->getUsername()));
 		}
-		/*if($this->emailExists()){
+		if($this->emailExists()){
 			$this->getErrorStack()->add("email.unique", sprintf($this->translate->_("useraccount_email_unique_error"), $this->getEmail()));
-		}*/
+		}
 	}
 	/*
 	 * Pre process model data
@@ -114,6 +120,9 @@ class Merchant extends BaseEntity  {
 		}
 		if(isArrayKeyAnEmptyString('approvedbyid', $formvalues)){
 			unset($formvalues['approvedbyid']); 
+		}
+		if(isArrayKeyAnEmptyString('categoryid', $formvalues)){
+			unset($formvalues['categoryid']); 
 		}
 		if(isArrayKeyAnEmptyString('status', $formvalues)){
 			unset($formvalues['status']);
@@ -148,41 +157,18 @@ class Merchant extends BaseEntity  {
 			}
 		}
 		
-		// check if to create user
-		if(!isArrayKeyAnEmptyString('createuser', $formvalues) || !isArrayKeyAnEmptyString('createuserandinvite', $formvalues)){
-			$admins = array(); 
-			if(!isArrayKeyAnEmptyString('createdby', $formvalues)){
-				$admins[0]['createdby'] = $session->getVar('userid');
-			}
-			if(!isArrayKeyAnEmptyString('id', $formvalues)){
-				$admins[0]['merchantid'] = $formvalues['id'];
-			}
-			if($formvalues['type'] == 2){
-				$admins[0]['firstname'] = !isArrayKeyAnEmptyString('firstname', $formvalues) ? $formvalues['firstname'] : NULL;
-				$admins[0]['lastname'] = !isArrayKeyAnEmptyString('lastname', $formvalues) ? $formvalues['lastname'] : NULL;
-			}
-			if($formvalues['type'] == 1){
-				$admins[0]['firstname'] = $formvalues['contactperson'];
-				$admins[0]['lastname'] = '.';
-			}
-			$admins[0]['email'] = $formvalues['email'];
-			$admins[0]['phone'] = getFullPhone($formvalues['phone']);
-			$admins[0]['type'] = 3;
-			$admins[0]['isactive'] = 0;
-			$admins[0]['agreedtoterms'] = 0;
-			$admins[0]['usergroups'][0]["groupid"] = 3;
-			
-			if(!isArrayKeyAnEmptyString('createuserandinvite', $formvalues)){
-				$admins[0]['isinvited'] = 1;
-				$admins[0]['invitedbyid'] = $session->getVar('userid');
-				$admins[0]['dateinvited'] = date('Y-m-d');
-			}
-			if(count($admins) > 0){
-				$formvalues['admins'] = $admins;
+		if(!isArrayKeyAnEmptyString('createuser', $formvalues)){
+			if($formvalues['createuser'] == 1){
+				$this->setcreateuser(1);
 			}
 		}
-		
-		debugMessage($formvalues); // exit();
+		if(!isArrayKeyAnEmptyString('createuserandinvite', $formvalues)){
+			if($formvalues['createuserandinvite'] == 1){
+				$this->setcreateuserandinvite(1);
+			}
+		}
+		// check if to create user
+		// debugMessage($formvalues); // exit();
 		parent::processPost($formvalues);
 	}
 	
@@ -192,7 +178,7 @@ class Merchant extends BaseEntity  {
 		# validate unique username and email
 		$id_check = "";
 		if(!isEmptyString($this->getID())){
-			$id_check = " AND merchantid <> '".$this->getID()."' ";
+			$id_check = " AND merchantid <> '".$this->getID()."' AND id <> '".$this->getStore()->getID()."'";
 		}
 		
 		if(isEmptyString($username)){
@@ -248,9 +234,48 @@ class Merchant extends BaseEntity  {
 			$duplicates->delete();
 		}
 		
-		// send email invitation
-		if($this->getAdmin()->hasBeenInvited()){
-			$this->getAdmin()->sendProfileInvitationNotification($this->getID());
+		// check if user specified to add admin user and to invite them
+		if($this->getcreateuser() == 1){
+			$user = new UserAccount();
+			
+			if($this->isPerson()){
+				$firstname = $this->getFirstName();
+				$lastname = $this->getLastName();
+			}
+			if($this->isCompany()){
+				$firstname = $this->getContactPerson();
+				$lastname = '.';
+			}
+			
+			$inviteflag = $this->getcreateuserandinvite() == 1 ? 1 : 0;
+			$formvalues = array(
+							"merchantid" => $this->getID(),
+		                    "createdby" => $session->getVar('userid'),
+		                    "firstname" => $firstname,
+		                    "lastname" => $lastname,
+		                    "email" => $this->getEmail(),
+		                    "phone" => $this->getPhone(),
+		                    "type" => 3,
+		                    "isactive" => 0,
+		                    "agreedtoterms" => 0,
+		                    "usergroups" => array("0" => array("groupid" => 3)),
+		                    "isinvited" => 0
+		                );
+		    if($this->getcreateuserandinvite() == 1){
+		    	$formvalues["isinvited"] = 1;
+		    	$formvalues["invitedbyid"] = $session->getVar('userid');
+		    	$formvalues["dateinvited"] = date('Y-m-d');
+		    }
+		    
+		    $user->processPost($formvalues);
+		    /*debugMessage('error is '.$user->getErrorStackAsString());
+		    debugMessage($user->toArray());*/
+		    if($user->save()){
+			    // send email invitation
+				if($user->hasBeenInvited()){
+					$user->sendProfileInvitationNotification($this->getID());
+				}
+		    }
 		}
 		
     	// exit();
@@ -259,7 +284,7 @@ class Merchant extends BaseEntity  {
 	# find duplicates after save
 	function getDuplicates(){
 		if($this->isCompany()){
-			$q = Doctrine_Query::create()->from('Merchant m')->where("m.type = 1 AND m.orgname = '".$this->getOrgName()."' AND m.category = '".$this->getCategory()."' AND m.id <> '".$this->getID()."' ");
+			$q = Doctrine_Query::create()->from('Merchant m')->where("m.type = 1 AND m.orgname = '".$this->getOrgName()."' AND m.categoryid = '".$this->getCategoryID()."' AND m.id <> '".$this->getID()."' ");
 		}
 		if($this->isPerson()){
 			$q = Doctrine_Query::create()->from('Merchant m')->where("m.type = 2 AND m.firstname = '".$this->getFirstName()."' AND m.lastname = '".$this->getLastName()."' AND m.id <> '".$this->getID()."' ");

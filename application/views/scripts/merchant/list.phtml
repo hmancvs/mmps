@@ -194,7 +194,7 @@ $(document).ready(function() {
                                     <td style="width:100px; padding-left:2px; padding-right:2px;">
                                     	<label class="control-label blocked">Ordering:</label>
                                         <?php
-                                            $allorders = array('1' => 'Latest First', '4'=>'Earliest First', '2'=>'Alphabetical (Firstname)','3'=>'Alphabetical (Lastname)', '5'=>'Alphabetical (Company name)');
+                                            $allorders = array('1' => 'Latest First', '4'=>'Earliest First', '2'=>'Alphabetical (First Name)','3'=>'Alphabetical (Last Name)', '5'=>'Alphabetical (Company name)');
                                             $ordersdropdown = new Zend_Form_Element_Select('order',
                                                                 array(
                                                                     'multiOptions' => $allorders,
@@ -282,7 +282,7 @@ $(document).ready(function() {
             	<div style="clear:both;" class="alert alert-info margin5"><?php echo $this->translate("global_list_norecords_error"); ?></div>
             <?php } else { ?>
             	<div class="blocked clear" style="width:auto; max-width:100%; overflow-x:scroll; padding:2px; border:2px solid #3b759a; border-bottom-width:4px; border-right:none;">
-                    <table class="table list" style="">
+                    <table class="table list table-striped" style="">
                         <thead>
                             <tr>
                                 <td>Actions <img src="<?php echo $this->baseUrl('images/spacer.gif'); ?>" style="width:85px; height:2px;" /></td>

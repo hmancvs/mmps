@@ -32,7 +32,7 @@
 					validate_ug: true
 				},
 				type: "required",
-				category: "required",
+				categoryid: "required",
 				storename: "required",
 				username: {
 					required: true, 
@@ -57,7 +57,7 @@
 					validate_ug: "<?php echo $this->translate("globale_phonenumber_format"); ?>"
 				},
 				type: "<?php echo $this->translate("merchant_type_error"); ?>",
-				category: "<?php echo $this->translate("merchant_category_error"); ?>",
+				categoryid: "<?php echo $this->translate("merchant_category_error"); ?>",
 				storename: "<?php echo $this->translate("merchant_storename_error"); ?>",
 				username: {
 					required: "<?php echo $this->translate("useraccount_username_error"); ?>", 					
@@ -286,19 +286,19 @@ tr#checkboxes td {
             <td>
             	<label class="control-label"><?php echo $this->translate("merchant_category_label"); ?>: <?php echo $this->translate("global_required_field_marker"); ?></label></label>
                 <?php
-                    $allcats = getBusinessCategories();
-                    $dropdown = new Zend_Form_Element_Select('category',
+                    $values = getLevelOneCategories();
+                    $dropdown = new Zend_Form_Element_Select('categoryid',
                                         array(
-                                            'multiOptions' => array_merge_maintain_keys(array('' => '<Select One>'), $allcats),
+                                            'multiOptions' => array_merge_maintain_keys(array('' => '<Select One>'), $values),
                                             'view' => new Zend_View(),
                                             'decorators' => array('ViewHelper'),
                                             'class' => array('span3')
 											
                                         )
                     );  
-                    $dropdown->setValue($merchant->getcategory()); 
+                    $dropdown->setValue($merchant->getcategoryid()); 
                     echo $dropdown->render();
-                ?><div id="category_error"></div>
+                ?><div id="categoryid_error"></div>
             </td>
         </tr>
         <tr>

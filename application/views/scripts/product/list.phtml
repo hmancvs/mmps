@@ -192,7 +192,7 @@ $(document).ready(function() {
             	<div style="clear:both;" class="alert alert-info margin5"><?php echo $this->translate("global_list_norecords_error"); ?></div>
             <?php } else { ?>
             	<div class="blocked clear" style="width:auto; max-width:100%; overflow-x:scroll; padding:2px; border:2px solid #3b759a; border-bottom-width:4px; border-right:none;">
-                    <table class="table list" style="">
+                    <table class="table list table-striped" style="">
                         <thead>
                             <tr>
                             	<td><img src="<?php echo $this->baseUrl('images/spacer.gif'); ?>" style="width:15px; height:2px;" /></td>
@@ -203,8 +203,9 @@ $(document).ready(function() {
                                 <?php if(isAdmin()){ ?>
                                 	<td class="wrapping">Store<img src="<?php echo $this->baseUrl('images/spacer.gif'); ?>" style="width:100px; height:2px;" /></td>
                                 <?php } ?>
-                                <td class="wrapping">Quantity <img src="<?php echo $this->baseUrl('images/spacer.gif'); ?>" style="width:15px; height:2px;" /></td>
+                                <td class="wrapping">Quantity </td>
                                 <td class="wrapping">Price (UGX)</td>
+                                <td class="wrapping">Trx Fees (UGX)</td>
                                 <td class="wrapping">Status <img src="<?php echo $this->baseUrl('images/spacer.gif'); ?>" style="width:30px; height:2px;" /></td>
                                 <?php if(isAdmin()){ ?>
                                 <td class="wrapping">Date Added <img src="<?php echo $this->baseUrl('images/spacer.gif'); ?>" style="width:30px; height:2px;" /></td>
@@ -221,7 +222,7 @@ $(document).ready(function() {
 									
 									$hasprofileimage = false;
 									$real_path = APPLICATION_PATH.DIRECTORY_SEPARATOR."..".DIRECTORY_SEPARATOR."public".DIRECTORY_SEPARATOR."uploads".DIRECTORY_SEPARATOR."stores".DIRECTORY_SEPARATOR."store_";
-									$real_path = $real_path.$storeid.DIRECTORY_SEPARATOR."product_".$id.DIRECTORY_SEPARATOR."large_".$line['profilephoto'];
+									$real_path = $real_path.$storeid.DIRECTORY_SEPARATOR."product_".$id.DIRECTORY_SEPARATOR."avatar".DIRECTORY_SEPARATOR."large_".$line['profilephoto'];
 									if(file_exists($real_path) && !isEmptyString($line['profilephoto'])){
 										$hasprofileimage = true;
 									}
@@ -229,7 +230,7 @@ $(document).ready(function() {
 									$photo_path = '';
 									$photo_path = $baseUrl.'/uploads/default/default_thumbnail_product.jpg';
 									if($hasprofileimage){
-										$photo_path = $baseUrl.'/uploads/stores/store_'.$storeid.'/product_'.$id.'/thumbnail_'.$line['profilephoto'];
+										$photo_path = $baseUrl.'/uploads/stores/store_'.$storeid.'/product_'.$id.'/avatar/thumbnail_'.$line['profilephoto'];
 									}
 									
                             ?>
@@ -247,8 +248,9 @@ $(document).ready(function() {
                                     <?php if(isAdmin()){ ?>
                                         <td><?php echo $storename; ?></td>
                                     <?php } ?>
-                                    <td><?php echo isEmptyString($line['quantity']) || $line['quantity'] == 0  ? '--' : $line['quantity']; ?></td>
-                                    <td class="rightalign"><?php echo isEmptyString($line['price']) ? '--' : formatNumber($line['price']); ?></td>
+                                    <td class="rightalign" style="padding-right:15px;"><?php echo isEmptyString($line['quantity']) || $line['quantity'] == 0  ? '--' : clean_num($line['quantity']); ?></td>
+                                    <td class="rightalign" style="padding-right:15px;"><?php echo isEmptyString($line['cost']) ? '--' : formatNumber($line['cost']); ?></td>
+                                    <td class="rightalign" style="padding-right:15px;"><?php echo isEmptyString($line['trxfee']) ? '--' : formatNumber($line['trxfee']); ?></td>
                                     <td><?php echo isEmptyString($line['status']) || $line['status'] == 0 ? 'Disabled' : 'Enabled'; ?></td>
                                     <?php if(isAdmin()){ ?>
                                         <td><?php echo date('d/m/Y H:i', strtotime($line['pdate'])); ?></td>

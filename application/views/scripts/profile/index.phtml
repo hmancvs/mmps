@@ -163,7 +163,7 @@ select#salutation {
 }
 </style>
 <div id="tabs">
-    <?php require APPLICATION_PATH."/views/scripts/profile/profileleftcolumn.phtml"; ?>
+    <?php require APPLICATION_PATH."/views/scripts/profile/leftcolumn.phtml"; ?>
     <div class="span9 tab-content" id="center">   
         <div id="basics">
             <h2>Update Profile</h2>
@@ -287,34 +287,10 @@ select#salutation {
             <?php } ?>
         	</form> 
         </div>
-         <div id="contacts">
-            <!--<h2>Contact Information</h2>-->
-            <form id="profileform-contacts" class="form-horizontal contacts" action="<?php echo $posturl; ?>" method="post">
-            <?php if($request->tab == 'contacts'){ ?>
-            	<?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
-                    <div class="alert alert-success"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
-                <?php } ?>	
-                <?php if($sessionhaserror) { ?>
-                    <div class="alert alert-error"><?php echo $session->getVar(ERROR_MESSAGE); ?></div>
-                <?php } ?>
-                
-            <?php } ?>
-            </form>   	
-        </div>
-        <div id="personal">
-            <h2>TBD</h2>
-            <form id="profileform-personal" class="form-horizontal personal" action="<?php echo $posturl; ?>" method="post">
-            <?php if($request->tab == 'personal'){ ?>
-                <?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
-                    <div class="alert alert-success"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
-                <?php } ?>	
-                <?php if($sessionhaserror) { ?>
-                    <div class="alert alert-error"><?php echo $session->getVar(ERROR_MESSAGE); ?></div>
-                <?php } ?>
-            <?php } ?>
-            </form>  	
-        </div>
-        <?php // require APPLICATION_PATH."/views/scripts/profile/settings.phtml"; ?>
+        <?php if(isSubscriber()){ ?>
+            
+        <?php } ?>
+        <?php require APPLICATION_PATH."/views/scripts/profile/settings.phtml"; ?>
     </div> 
 </div>
 <?php

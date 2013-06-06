@@ -5,7 +5,7 @@ class SignupController extends IndexController   {
 	function processstep1Action() {
 		// the group to which the user is to be added
 		$formvalues = $this->_getAllParams();
-		debugMessage($this->_getAllParams()); // exit();	
+		// debugMessage($this->_getAllParams()); // exit();	
 		$iscustomer = false;
 		$ismerchant = false;
 		if($this->_getParam('type') == 2){

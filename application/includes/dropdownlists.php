@@ -658,5 +658,78 @@
 		$query = "SELECT s.id as optionvalue, concat(s.name, ' [', s.url, ']') as optiontext FROM store AS s inner join merchant m on (s.merchantid = m.id) WHERE s.id <> '' order by s.name ";
 		return getOptionValuesFromDatabaseQuery($query);
 	}
-	
+	# user types
+	function getUserType($value = ''){
+		$array = array(1 =>'Web Master', 2 => 'Customer', '3' => 'Merchant', '4'=>'Data Clerk','5'=>'Management');
+		if(!isEmptyString($value)){
+			return $array[$value];
+		}
+		return $array;
+	}
+	# user status
+	function getUserStatus($value = ''){
+		$array = array(0 =>'Pending Activation', 1 => 'Active', 2=>'Deactivated');
+		if(!isEmptyString($value)){
+			return $array[$value];
+		}
+		return $array;
+	}
+	# product status values
+	function getActiveStatus($value = ''){
+		$array = array('1' => 'Enabled', '0' =>'Disabled');
+		if(!isEmptyString($value)){
+			return $array[$value];
+		}
+		return $array;
+	}
+	# product types
+	function getProductTypes($value = ''){
+		$array = array(1=>'Simple Products', 2=>'Downloadable Products', 3=>'Virtual Product/Service');
+		if(!isEmptyString($value)){
+			return $array[$value];
+		}
+		return $array;
+	}
+	# product dimension unit
+	function getDimensionUnits($value = ''){
+		$array = array(1=>'mm', 2=>'cm', 3=>'m', 4=>'inches');
+		if(!isEmptyString($value)){
+			return $array[$value];
+		}
+		return $array;
+	}
+	# product weight
+	function getWeightUnits($value = ''){
+		$array = array(1=>'kgs', 2=>'g', 3=>'mg', 'ltrs', 'ml');
+		if(!isEmptyString($value)){
+			return $array[$value];
+		}
+		return $array;
+	}
+	# check for level one categories
+	function getLevelOneCategories($value = ''){
+		$query = "SELECT c.id as optionvalue, c.name as optiontext FROM category c order by optiontext ";
+		$array = getOptionValuesFromDatabaseQuery($query);
+		if(!isEmptyString($value)){
+			return $array[$value];
+		}
+		return $array;
+	}
+	# check for level two categories
+	function getLevelTwoCategories($userid ){
+		$conn = Doctrine_Manager::connection(); 
+		$query = "SELECT c.id as optionvalue, c.name as optiontext FROM category c where c.createdby = '".$userid."' AND c.level = 2 order by optiontext ";
+		// $array = $conn->fetchAll($query);
+		$array = getOptionValuesFromDatabaseQuery($query);
+		return $array;
+	}
+	# check for level three categories
+	function getLevelThreeCategories($userid, $catid){
+		$conn = Doctrine_Manager::connection(); 
+		$query = "SELECT c.id as optionvalue, c.name as optiontext FROM category c where c.createdby = '".$userid."' AND c.parentid = '".$catid."' AND c.level = 3 order by optiontext ";
+		// $array = $conn->fetchAll($query);
+		// debugMessage($array);
+		$array = getOptionValuesFromDatabaseQuery($query);
+		return $array;
+	}
 ?>

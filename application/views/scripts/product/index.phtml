@@ -21,7 +21,7 @@
 	
 	#in case of errors in session, populate the fields from session
 	if(!isEmptyString($session->getVar(ERROR_MESSAGE))){ 
-		$merchant->processPost($session->getVar(FORM_VALUES));		
+		$product->processPost($session->getVar(FORM_VALUES));		
 	}
 	
 	$posturl = $this->baseUrl("product/edit"); 
@@ -30,126 +30,264 @@
 	$this->headTitle('Update Product | '.$title);
 	
 ?>
-
+<script type="text/javascript" src="<?php echo $this->baseUrl('javascript/tinymce/8.jquery.tinymce.js'); ?>"></script>
 <script>
 $(document).ready(function() {
-	$("#profileform-general").validate({	
-		// define the validation rules one field at a time
-		rules: {
-			name: "required",
-			refno: "required",
-			price: "required",
-			categoryid: "required",
-			type: "required",
-			storeid: "required"
-		}, 
-		// the messages for each of the fields being validated
-		messages: {		
-			name: "<?php echo $this->translate("product_name_error"); ?>",
-			refno: "<?php echo $this->translate("product_refno_error"); ?>",
-			price: "<?php echo $this->translate("product_price_error"); ?>",
-			categoryid: "<?php echo $this->translate("product_category_error"); ?>",
-			type: "<?php echo $this->translate("product_type_error"); ?>",
-			storeid: "<?php echo $this->translate("product_storeid_error"); ?>"
-		},
-		// custom error positions
-		errorPlacement: function(error, element) {
-			switch(element.attr("name")){					
-				default:
-					error.appendTo("#"+element.attr("name")+"_error")
-					break;
-			}			
+	<?php if($request->tab == 'general'){ ?>
+		$("#profileform-general").validate({	
+			// define the validation rules one field at a time
+			rules: {
+				name: "required",
+				type: "required",
+				storeid: "required"
+			}, 
+			// the messages for each of the fields being validated
+			messages: {		
+				name: "<?php echo $this->translate("product_name_error"); ?>",
+				type: "<?php echo $this->translate("product_type_error"); ?>",
+				storeid: "<?php echo $this->translate("product_storeid_error"); ?>"
+			},
+			// custom error positions
+			errorPlacement: function(error, element) {
+				switch(element.attr("name")){					
+					default:
+						if(element.hasClass("useid_error")){
+							error.appendTo("#"+element.attr("id")+"_error");
+						} else {
+							error.appendTo("#"+element.attr("name")+"_error");
+						}
+						break;
+				}			
+			}
+		});
+		
+		// basics custom failure and success url
+		$("#profileform-general .savethenview").click(function() {
+			$("#profileform-general .successurl").val('<?php echo encode($this->baseUrl('product/view/tab/general')); ?>');
+			$("#profileform-general .failureurl").val('<?php echo encode($this->baseUrl('product/index/id/'.encode($product->getID()).'/tab/general')); ?>');
+		});
+		$("#profileform-general .savethennext").click(function() {
+			$("#profileform-general .successurl").val('<?php echo encode($this->baseUrl('product/index/tab/spec')); ?>');
+			$("#profileform-general .failureurl").val('<?php echo encode($this->baseUrl('product/index/id/'.encode($product->getID()).'/tab/general')); ?>');
+		});
+		
+		// html text editors
+		$('textarea.htmleditor').tinymce({
+			// Location of TinyMCE script
+			script_url : '<?php echo $this->baseUrl('javascript/tinymce/tiny_mce.js'); ?>',
+	
+			// General options
+			theme : "advanced",
+			content_css : "<?php echo $this->baseUrl('stylesheets/tinymce/tiny_mce.js'); ?>",
+	
+			// Theme options
+			theme_advanced_buttons1 : "cut,copy,paste,pastetext,pasteword,separator,bold,italic,underline,separator,justifyleft,justifycenter,justifyright, justifyfull,separator,bullist,numlist,undo,redo",
+			theme_advanced_buttons2 : "",
+			theme_advanced_buttons3 : "",
+			theme_advanced_toolbar_location : "top",
+			theme_advanced_toolbar_align : "left",
+			theme_advanced_resizing : true
+		});
+	<?php } ?>
+	
+	<?php if($request->tab == 'spec'){ ?>
+		$("#profileform-spec").validate({	
+			// define the validation rules one field at a time
+			rules: {
+				refno: "required"
+			}, 
+			// the messages for each of the fields being validated
+			messages: {		
+				refno: "<?php echo $this->translate("product_refno_error"); ?>"
+			},
+			// custom error positions
+			errorPlacement: function(error, element) {
+				switch(element.attr("name")){					
+					default:
+						if(element.hasClass("useid_error")){
+							error.appendTo("#"+element.attr("id")+"_error");
+						} else {
+							error.appendTo("#"+element.attr("name")+"_error");
+						}
+						break;
+				}			
+			}
+		});
+	
+		// basics custom failure and success url
+		$("#profileform-spec .savethenview").click(function() {
+			$("#profileform-spec .successurl").val('<?php echo encode($this->baseUrl('product/view/tab/spec')); ?>');
+			$("#profileform-spec .failureurl").val('<?php echo encode($this->baseUrl('product/index/id/'.encode($product->getID()).'/tab/spec')); ?>');
+		});
+		
+		$("#profileform-spec .savethennext").click(function() {
+			$("#profileform-spec .successurl").val('<?php echo encode($this->baseUrl('product/view/tab/categories')); ?>');
+			$("#profileform-spec .failureurl").val('<?php echo encode($this->baseUrl('product/index/id/'.encode($product->getID()).'/tab/spec')); ?>');
+		});
+		
+		// add/remove new attributes
+		$(".addline").click(function() {
+			showNewLine($(this).attr('id'));
+		});		
+		function showNewLine(type) {
+			$(".hidden_row_"+type+":first").removeClass("hidden_row_"+type).addClass("visible_row_"+type);	
+			
+			// remove disabled attr from the fields
+			$("tr.visible_row_"+type+" input").attr("disabled", false);
+			$("tr.visible_row_"+type+" select").attr("disabled", false);	
+				
+			//if the maximum no of rows is added, hide the link to add another row
+			if ($("tr.visible_row_"+type+"").size() == 10) {
+				$("#"+type).hide();	
+			} else {
+				$("#"+type).show();	
+			}				
 		}
-	});
+		
+		// delete rules
+		$(".removeline").click(function() {
+			removeLine($(this).attr('id'), $(this).attr('rel'));
+		});
+		function removeLine(lineid, type) {
+			var row_to_hide = lineid;
+			// confirm popup
+			bootbox.confirm("Are you sure you want to delete this entry? <br /><br /> Click <b>'OK'</b> to confirm, and <b>'Cancel'</b> to ignore", function(confirmed) {
+				if(confirmed){
+					$("tr.visible_row_"+type).has('a#'+row_to_hide).addClass("hidden_row_"+type).removeClass("visible_row_"+type);
+					// $("input, select").attr("disabled", true);	
+					$("tr."+row_to_hide+" input").val('').attr("disabled", true);
+					$("tr."+row_to_hide+" select").val('').attr("disabled", true);	
+					//if the maximum no of rows is added, hide the link to add another row
+					if ($("tr.visible_row_"+type).size() == 10) {
+						$("#"+type).hide();		
+					} else {
+						$("#"+type).show();	
+					}	
+					$(".units, .qty").trigger('keyup');
+				} else {
+					return false;
+				}
+			});
+		}
+	<?php } ?>
 	
-	// basics custom failure and success url
-	$("#profileform-general .savethenview").click(function() {
-		$("#profileform-general .successurl").val('<?php echo encode($this->baseUrl('product/view/tab/general')); ?>');
-		$("#profileform-general .failureurl").val('<?php echo encode($this->baseUrl('product/index/id/'.encode($product->getID()).'/tab/general')); ?>');
-	});
+	<?php if($request->tab == 'prices'){ ?>
+		$("#profileform-prices").validate({	
+			// define the validation rules one field at a time
+			rules: {
+				cost: "required"
+			}, 
+			// the messages for each of the fields being validated
+			messages: {		
+				cost: "Please enter Cost"
+			}
+		});
+		
+		// basics custom failure and success url
+		$("#profileform-prices .failureurl").val('<?php echo encode($this->baseUrl('product/index/id/'.encode($product->getID()).'/tab/prices')); ?>');
+		$("#profileform-prices .successurl").val('<?php echo encode($this->baseUrl('product/view/tab/prices')); ?>');
+		$("#profileform-prices .savethennext").click(function() {
+			$("#profileform-prices .successurl").val('<?php echo encode($this->baseUrl('product/view/tab/image')); ?>');
+		});
+		
+		$('#cost').keyup(function(){
+			var cost = $(this).val();
+			var rate = $('#trxrate').val();
+			var computedtrxfee = IsValidAmount(cost) ? (rate/100)*cost : 0;
+			var computedtrxfee_round = Math.round(computedtrxfee)
+			var netprice = cost - computedtrxfee_round;
+			// alert(computedrate);
+			$("#trxfee_display").html(addCommas(computedtrxfee_round));
+			$("#trxfee").val(computedtrxfee_round);
+			$("#netprice_display").html(addCommas(netprice));
+			$("#netprice").val(netprice);
+		});
+		$('#cost').trigger('keyup');
+		
+	<?php } ?>
 	
+	<?php if($request->tab == 'account'){ ?>
+		var dateofregOpts = datepickerOpts;
+		datepickerOpts.dateFormat = '<?php echo $config->dateandtime->javascriptmediumformat; ?>';
+		// dateofregOpts.maxDate = new Date();
+		$("#dateavailable, #dateexpire").datepicker(datepickerOpts);
+		
+		$("#profileform-account .failureurl").val('<?php echo encode($this->baseUrl('product/index/id/'.encode($product->getID()).'/tab/account')); ?>');
+		$("#profileform-account .successurl").val('<?php echo encode($this->baseUrl('product/view/tab/account')); ?>');
+		
+	<?php } ?>
+	
+	// global javascript
+	$("#bottom_buttons").html($('#top_buttons').html())
 }); 
 </script>
 <style>
-
+#tabs .alert.alert-success, #tabs .alert.alert-error {
+	width:88%;
+	margin-left:10px;
+}
+.radio input[type="radio"], .checkbox input[type="checkbox"] {
+	margin-top:1px;
+}
 </style>
 <div id="tabs">
     <?php require APPLICATION_PATH."/views/scripts/product/leftcolumn.phtml"; ?>
-    <div class="span9 tab-content" id="center">   
+    <div class="span9 tab-content" id="center">
+		<?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
+        	<div class="alert alert-success"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
+        <?php } ?>	
+        <?php if($sessionhaserror) { ?>
+        	<div class="alert alert-error"><?php echo $session->getVar(ERROR_MESSAGE); ?></div>
+        <?php } ?>
         <div id="general">
             <form id="profileform-general" class="form-horizontal general" action="<?php echo $posturl; ?>" method="post">
+             <h2>Product > 
+                <a href="<?php echo $this->baseUrl('product/view/id/'.encode($product->getID())); ?>"><?php echo $title; ?></a> > 
+                General 
+             </h2>
             <?php if($request->tab == 'general'){ ?>
         	<div class="row makerelative" style="margin-left:0px;">
-                <?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
-                    <div class="alert alert-success clear"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
-                <?php } ?>
-                <?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
-                    <div class="alert alert-success"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
-                <?php } ?>
-                <div id="general_actions" class="makeabsolute" style="top:5px; right:20px;">
-                    <table class="table border0 nohover margin0">                       
+                <div id="general_actions" class="makeabsolute" style="top:-40px; right:20px;">
+                    <table class="table border0 nohover margin0" id="top_buttons">                       
                        <tr>		                    
-                            <td class="padding2"><button type="submit" class="btn btn-primary savethenview"><i class="icon-ok icon-white"></i> <?php echo $this->translate('global_button_save_changes'); ?></button>
+                            <td class="padding2"><button type="submit" class="btn btn-primary savethenview" title="<?php echo $this->translate('global_button_save'); ?>"><i class="icon-ok icon-white"></i> <?php echo $this->translate('global_button_save'); ?></button>
                             </td>
-                            <td class="padding2"><a href="<?php echo $this->baseUrl('product/view/id/'.encode($product->getID())); ?>" class="btn"><i class="icon-remove"></i> <?php echo $this->translate('global_button_cancel'); ?></a>
+                            <td class="padding2"><button type="submit" class="btn btn-primary savethennext" title="<?php echo $this->translate('global_button_save_continue'); ?>"><i class="icon-ok icon-white"></i> <?php echo $this->translate('global_button_save_continue'); ?></button></td>
+                            <td class="padding2"><a style="padding-top:6px; padding-bottom:6px;" href="<?php echo $this->baseUrl('product/view/id/'.encode($product->getID())); ?>" class="btn" title="<?php echo $this->translate('global_button_cancel'); ?>"><i class="icon-remove"></i>  </a>
                             </td>
                        </tr>
                     </table>
                 </div>
-                <h2>Update Product > 
-                	<a href="<?php echo $this->baseUrl('product/view/id/'.encode($product->getID())); ?>"><?php echo $title; ?></a> > 
-					General 
-                </h2>
-                <span class="span6 marginleft0" style="width:98%;">
-                    <div class="well row marginleft0" style="padding-left:10px;">                        
+               
+                <span class="span6 margin0" style="width:98%;">
+                    <div class="well row margin0" style="padding-left:10px;">
+                    	<input type="hidden" id="storeid" name="storeid" value="<?php echo $product->getStoreID(); ?>" /><div id="storeid_error"></div>
+                        <input type="hidden" name="entityname" value="Product" />
+                        <input type="hidden" id="id" name="id" value="<?php echo encode($product->getID()); ?>" />
+                        <input type="hidden" id="type" name="type" value="<?php echo $product->getType(); ?>" />                               
+                        <input type="hidden" class="successurl" id="<?php echo URL_SUCCESS; ?>" name="<?php echo URL_SUCCESS; ?>" title="general" />
+                        <input type="hidden" class="failureurl" id="<?php echo URL_FAILURE; ?>" name="<?php echo URL_FAILURE; ?>" title="general" />
+                        <input type="hidden" id="<?php echo SUCCESS_MESSAGE; ?>" name="<?php echo SUCCESS_MESSAGE; ?>" value="<?php echo $this->translate("global_save_success"); ?>" />
+                        <input type="hidden" id="tab" name="tab" value="general" />                          
                         <table class="table noborder profile">                       
 							<tr>
-                                <td style="width:45%;"><label class="control-label"><?php echo $this->translate("product_name_label"); ?>: <?php echo $this->translate("global_required_field_marker"); ?></label><input type="text" name="name" id="name" class="span3" value="<?php echo $product->getName(); ?>" /><div id="name_error"></div>
-                                <input type="hidden" id="storeid" name="storeid" value="<?php echo $product->getStoreID(); ?>" /><div id="storeid_error"></div>
-                                <input type="hidden" name="entityname" value="Product" />
-                                <input type="hidden" id="id" name="id" value="<?php echo encode($product->getID()); ?>" />
-                                <input type="hidden" id="type" name="type" value="<?php echo $product->getType(); ?>" />                               
-                                <input type="hidden" class="successurl" id="<?php echo URL_SUCCESS; ?>" name="<?php echo URL_SUCCESS; ?>" title="general" />
-                                <input type="hidden" class="failureurl" id="<?php echo URL_FAILURE; ?>" name="<?php echo URL_FAILURE; ?>" title="general" />
-                                <input type="hidden" id="<?php echo SUCCESS_MESSAGE; ?>" name="<?php echo SUCCESS_MESSAGE; ?>" value="Product updated successfully" />    
+                                <td style="width:50%;"><label class="control-label"><?php echo $this->translate("product_name_label"); ?>: <?php echo $this->translate("global_required_field_marker"); ?></label><input type="text" name="name" id="name" class="span3" value="<?php echo $product->getName(); ?>" /><div id="name_error"></div>
                                 </td>
                                 <td><label class="control-label"><?php echo $this->translate("product_type_label"); ?>:</label>
-								<?php
-                                    /*$values = getProductTypes();*/ $values = array('1' => 'Downloads', '2' => 'Services', '3' => 'TBD');
-									echo  $values[$product->getType()];
-                                ?><div id="type_error"></div>
+									<?php echo getProductTypes($product->getType()); ?><div id="type_error"></div>
                                 </td>
                             </tr>
                             <tr>
-                                <td><label class="control-label"><?php echo $this->translate("product_refno_label"); ?>:  <?php echo $this->translate("global_required_field_marker"); ?></label>
-									<input type="text" name="refno" id="refno" class="span3" value="<?php echo $product->getRefNo(); ?>" /><div id="refno_error"></div></td>
-                                <td><label class="control-label"><?php echo $this->translate("product_category_label"); ?>:  <?php echo $this->translate("global_required_field_marker"); ?></label>
-                                	<?php
-										/*$values = getProductCategories();*/ $values = array('1' => 'Category 1', '2' => 'Category 2');
-										$dropdown = new Zend_Form_Element_Select('categoryid',
-															array(
-																'multiOptions' => array_merge_maintain_keys(array('' => '<Select One>'), $values),
-																'view' => new Zend_View(),
-																'decorators' => array('ViewHelper'),
-																'class' => array('span3')
-																
-															)
-										);  
-										$dropdown->setValue($product->getCategoryID()); 
-										echo $dropdown->render();
-									?><div id="categoryid_error"></div>        
+                                <td colspan="2"><label class="control-label">Description<?php //echo $this->translate("product_refno_label"); ?>:</label>
+									<textarea id="description" name="description" class="expanding xhtmleditor" style="width:95%;"><?php echo $product->getdescription(); ?></textarea>  
                                 </td>
                             </tr>
                         </table>
                     </div>
-                    <div class="well lighter row marginleft0" style="padding-left:10px; margin-top:10px;">                        
-                        <table class="table noborder profile">                       
-                           <h3 class="well-legend margin0">Description</h3>
-                           	
-                        </table>
-                    </div>
+                    
                 </span> 
         	</div>
+            <div id="bottom_buttons" class="makeabsolute" style="bottom:3px; right:0;"></div>
             <?php } ?>
         	</form> 
         </div>
@@ -158,37 +296,256 @@ $(document).ready(function() {
                 <a href="<?php echo $this->baseUrl('product/view/id/'.encode($product->getID())); ?>" title="List Products"><?php echo $title; ?></a> > 
                 Specification 
             </h2>
-            <form id="profileform-spec" class="form-horizontal spec">
+            <form id="profileform-spec" class="form-horizontal spec makerelative" action="<?php echo $posturl; ?>" method="post" style="padding-bottom:50px;">
                 <?php if($request->tab == 'spec'){ ?>
-                <div class="row" style="margin-left:0px;">
-                	<?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
-                        <div class="alert alert-success"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
-                    <?php } ?>
-                    <?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
-                        <div class="alert alert-success"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
-                    <?php } ?>
+                <div class="row margin0 makerelative">
+                    <div id="spec_actions" class="makeabsolute" style="top:-40px; right:20px;">
+                        <table class="table border0 nohover margin0" id="top_buttons">                       
+                           <tr>		                    
+                                <td class="padding2"><button type="submit" class="btn btn-primary savethenview" title="<?php echo $this->translate('global_button_save'); ?>"><i class="icon-ok icon-white"></i> <?php echo $this->translate('global_button_save'); ?></button>
+                                </td>
+                                <td class="padding2"><button type="submit" class="btn btn-primary savethennext" title="<?php echo $this->translate('global_button_save_continue'); ?>"><i class="icon-ok icon-white"></i> <?php echo $this->translate('global_button_save_continue'); ?></button></td>
+                                <td class="padding2"><a style="padding-top:6px; padding-bottom:6px;" href="<?php echo $this->baseUrl('product/view/id/'.encode($product->getID()).'/tab/spec'); ?>" class="btn" title="<?php echo $this->translate('global_button_cancel'); ?>"><i class="icon-remove"></i>  </a>
+                                </td>
+                           </tr>
+                        </table>
+                    </div>
+                    <span class="span6 margin0" style="width:98%;">
+                    	<input type="hidden" name="entityname" value="Product" />
+                        <input type="hidden" id="id" name="id" value="<?php echo encode($product->getID()); ?>" />
+                        <input type="hidden" class="successurl" id="<?php echo URL_SUCCESS; ?>" name="<?php echo URL_SUCCESS; ?>" title="spec" />
+                        <input type="hidden" class="failureurl" id="<?php echo URL_FAILURE; ?>" name="<?php echo URL_FAILURE; ?>" title="spec" />
+                        <input type="hidden" id="<?php echo SUCCESS_MESSAGE; ?>" name="<?php echo SUCCESS_MESSAGE; ?>" value="<?php echo $this->translate("global_save_success"); ?>" />
+                        <input type="hidden" id="tab" name="tab" value="spec" />
+                        <div class="well row margin0" style="padding-left:10px;"> 
+                            <table class="table noborder">                       
+                                <tr>
+                                    <td style="width:20%;"><label class="control-label"><?php echo $this->translate("product_refno_label"); ?>:  <?php echo $this->translate("global_required_field_marker"); ?></label></td>
+                                    <td><input type="text" name="refno" id="refno" class="span3" value="<?php echo $product->getRefNo(); ?>" /><div id="refno_error"></div></td>
+                                </tr>
+                                <tr>
+                                    <td><label class="control-label">Model<?php //echo $this->translate("product_refno_label"); ?>:</label></td>
+                                    <td><input type="text" name="model" id="model" class="span3" value="<?php echo $product->getModel(); ?>" /></td>
+                                </tr>
+                                <tr>
+                                    <td><label class="control-label">Serial No<?php //echo $this->translate("product_category_label"); ?>:</label></td>
+                                    <td><input type="text" name="serialno" id="serialno" class="span3" value="<?php echo $product->getserialno(); ?>" /></td>     
+                                </tr>
+                                <tr>
+                                    <td><label class="control-label">Manufacturer<?php //echo $this->translate("product_refno_label"); ?>:</label>
+                                    <td><input type="text" name="manufacturer" id="manufacturer" class="span3" value="<?php echo $product->getmanufacturer(); ?>" /></td>
+                                </tr>
+                               	<tr>
+                                    <td><label class="control-label">Dimensions<?php //echo $this->translate("product_refno_label"); ?>:</label></td>
+                                    <td style="padding-top:0;"><table class="table table-condesed border0 nohover margin0">
+                                        	<tr>
+                                            	<td style="width:75px; padding-left:0;"><label class="blocked">Length</label>
+                                                	<input type="text" name="length" id="length" class="span1 centeralign isdecimal" value="<?php echo clean_num($product->getlength()); ?>" />&nbsp;&nbsp; x<div id="length_error"></div></td> 
+                                        		<td style="width:75px; padding-left:0;"><label class="blocked">Width</label>
+                                                	<input type="text" name="width" id="width" class="span1 centeralign isdecimal" value="<?php echo clean_num($product->getwidth()); ?>" />&nbsp;&nbsp; x<div id="width_error"></div></td>
+                                        		<td style="width:75px; padding-left:0;"><label class="blocked">Height</label>
+                                                	<input type="text" name="height" id="height" class="span1 centeralign isdecimal" value="<?php echo clean_num($product->getheight()); ?>" /><div id="height_error"></div></td> 
+												<td><label class="blocked">Unit</label>
+												<?php
+                                                    $values = getDimensionUnits();
+                                                    $dropdown = new Zend_Form_Element_Select('dimensionunit',
+                                                                       array(
+                                                                            'multiOptions' => array_merge_maintain_keys(array('' => '<Select One>'), $values),
+                                                                            'view' => new Zend_View(),
+                                                                            'decorators' => array('ViewHelper'),
+                                                                            'class' => array('span2')
+                                                                            
+                                                                        )
+                                                    );  
+                                                    $dropdown->setValue($product->getdimensionunit()); 
+                                                    echo $dropdown->render();
+                                                ?><div id="dimensionunit_error"></div></td>
+                                              </tr>
+                                         </table>
+                                         <table class="table table-condesed border0 nohover margin0">
+                                        	<tr>
+                                            	<td style="width:70px; padding-left:0;"><label class="blocked">Weight</label>
+                                                	<input type="text" name="weight" id="weight" class="span1 centeralign isdecimal" value="<?php echo clean_num($product->getweight()); ?>" /><div id="weight_error"></div></td> 
+												<td><label class="blocked">Unit</label>
+												<?php
+                                                    $values = getWeightUnits();
+                                                    $dropdown = new Zend_Form_Element_Select('weightunit',
+                                                                       array(
+                                                                            'multiOptions' => array_merge_maintain_keys(array('' => '<Select One>'), $values),
+                                                                            'view' => new Zend_View(),
+                                                                            'decorators' => array('ViewHelper'),
+                                                                            'class' => array('span2')
+                                                                            
+                                                                        )
+                                                    );  
+                                                    $dropdown->setValue($product->getweightunit()); 
+                                                    echo $dropdown->render();
+                                                ?><div id="weightunit_error"></div></td>
+                                              </tr>
+                                         </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="well row marginleft0" style="min-height:200px; width:97%; margin-top:10px;">
+                            <h3 class="well-legend">Custom Attributes</h3>
+                            <table class="table table-stripped table-bordered hasheader" style="margin-top:15px;">
+                                <thead>
+                                    <tr class="rowheader">
+                                        <td style="width:30%;">Attribute<?php // echo $this->translate("season_input_type_label"); ?></td>
+                                        <td>Value<?php // echo $this->translate("season_input_name_label"); ?></td>
+                                        <td style="width:10%;">Order<?php // echo $this->translate("season_input_source_label"); ?></td>
+                                        <td style="width:8%;"><span title="Delete row"><a>Del</a></span></td>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                	<?php 
+										$prodetails = $product->getAllAttributes();
+										$nooflines = $prodetails->count();
+										$e = 0; $x = 0;
+										foreach($prodetails as $attribute){
+											$class = "visible_row_input";
+									?>
+									<tr class="<?php echo $class; ?> row_input_<?php echo $e; ?>" id="row_input_<?php echo $e; ?>">
+										<td>
+                                            <input style="width:94%;" type="text" name="customattributes[<?php echo md5($e); ?>][field]" id="customattributes_field_<?php echo $e; ?>" class="fields field_validate_<?php echo $e; ?> useid_error" value="<?php echo $attribute->getField(); ?>" />
+                                            <div id="customattributes_field_<?php echo $e; ?>_error"></div>
+                                        </td>
+										<td>
+											<input style="width:94%;" type="text" name="customattributes[<?php echo md5($e); ?>][value]" id="customattributes_value_<?php echo $e; ?>" class="values value_validate_<?php echo $e; ?> useid_error" value="<?php echo $attribute->getValue(); ?>" />
+                                            <div id="customattributes_field_<?php echo $e; ?>_error"></div>
+										</td>
+										<td>
+											<input style="width:80%;" type="text" name="customattributes[<?php echo md5($e); ?>][order]" id="customattributes_order_<?php echo $e; ?>" value="<?php echo $attribute->getOrder(); ?>" class="isnumber centeralign useid_error" /><div id="customattributes_order_<?php echo $e; ?>_error"></div>
+										</td>
+										<td class="centeralign"><a href="javascript: doNothing();" title="<?php echo $this->translate("global_button_remove"); ?>" id="row_input_<?php echo $e; ?>" class="removeline close button btn" rel="input">&times;</a></td>
+									</tr>
+									<?php $e++; $x++; } ?>
+                                    <?php 
+										$defaultlines = 5;
+										if($nooflines >= 5){
+											$defaultlines = $nooflines + 1;
+										}
+										for($i = $e; $i<10; $i++){
+											// debugMessage($i);
+											$class = "visible_row_input";
+											if($i >= $defaultlines){
+												$class = "hidden_row_input";
+											}
+										
+									?>
+										<tr class="<?php echo $class; ?> row_input_<?php echo $i; ?>" id="row_input_<?php echo $i; ?>">
+                                        	<td>
+                                                <input style="width:94%;" type="text" name="customattributes[<?php echo md5($i); ?>][field]" id="customattributes_field_<?php echo $i; ?>" class="fields field_validate_<?php echo $i; ?> useid_error" value="" />
+                                                <div id="customattributes_field_<?php echo $i; ?>_error"></div>
+                                            </td>
+                                            <td>
+                                                <input style="width:94%;" type="text" name="customattributes[<?php echo md5($i); ?>][value]" id="customattributes_value_<?php echo $i; ?>" class="values value_validate_<?php echo $i; ?> useid_error" value="" />
+                                                <div id="customattributes_field_<?php echo $i; ?>_error"></div>
+                                            </td>
+                                            <td>
+                                                <input style="width:80%;" type="text" name="customattributes[<?php echo md5($i); ?>][order]" id="customattributes_order_<?php echo $i; ?>" value="<?php echo $i+1; ?>" class="isnumber centeralign useid_error" /><div id="customattributes_order_<?php echo $i; ?>_error"></div>
+                                            </td>
+                                            <td class="centeralign"><a href="javascript: doNothing();" title="<?php echo $this->translate("global_button_remove"); ?>" id="row_input_<?php echo $i; ?>" class="removeline close button btn" rel="input">&times;</a></td>
+                                    	</tr>
+                                    <?php $x++; } ?>
+                                    <tr>
+                                        <td colspan="4"><a href="javascript: void(0)" title="Add another" class="addline btn btn-mini pull-left" id="input">Add Row</a></td>
+                                    </tr>
+                                </tbody>               
+                            </table>
+                        </div>
+                 	</span>
                 </div>
+                <div id="bottom_buttons" class="makeabsolute" style="bottom:3px; right:15px;"></div>
                 <?php } ?>
             </form>
+         </div>
+         <div id="categories">
+            <h2><a href="<?php echo $this->baseUrl('product/list'); ?>" title="List Products">Products</a> > 
+                <a href="<?php echo $this->baseUrl('product/view/id/'.encode($product->getID())); ?>" title="List Products"><?php echo $title; ?></a> > 
+                Categories 
+            </h2>
+            <form id="profileform-categories" class="form-horizontal categories makerelative" action="<?php echo $posturl; ?>" method="post" style="padding-bottom:50px;">
+                <?php if($request->tab == 'categories'){ ?>
+                
+                <?php } ?>
+            </form>   	
         </div>
-         <div id="price">
+         <div id="prices">
             <h2><a href="<?php echo $this->baseUrl('product/list'); ?>" title="List Products">Products</a> > 
                 <a href="<?php echo $this->baseUrl('product/view/id/'.encode($product->getID())); ?>" title="List Products"><?php echo $title; ?></a> > 
                 Price 
             </h2>
-            <form id="profileform-price" class="form-horizontal price">
-            	<?php if($request->tab == 'price'){ ?>
-					<?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
-                        <div class="alert alert-success"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
-                    <?php } ?>  
-                    <?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
-                        <div class="alert alert-success"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
-                    <?php } ?>
-                    <div class="row" style="margin-left:0px;">
-                    
+            <form id="profileform-prices" class="form-horizontal prices makerelative" action="<?php echo $posturl; ?>" method="post" style="padding-bottom:50px;">
+                <?php if($request->tab == 'prices'){ ?>
+                <div class="row margin0 makerelative">
+                    <div id="spec_actions" class="makeabsolute" style="top:-40px; right:20px;">
+                        <table class="table border0 nohover margin0" id="top_buttons">                       
+                           <tr>		                    
+                                <td class="padding2"><button type="submit" class="btn btn-primary savethenview" title="<?php echo $this->translate('global_button_save'); ?>"><i class="icon-ok icon-white"></i> <?php echo $this->translate('global_button_save'); ?></button>
+                                </td>
+                                <td class="padding2"><button type="submit" class="btn btn-primary savethennext" title="<?php echo $this->translate('global_button_save_continue'); ?>"><i class="icon-ok icon-white"></i> <?php echo $this->translate('global_button_save_continue'); ?></button></td>
+                                <td class="padding2"><a style="padding-top:6px; padding-bottom:6px;" href="<?php echo $this->baseUrl('product/view/id/'.encode($product->getID()).'/tab/prices'); ?>" class="btn" title="<?php echo $this->translate('global_button_cancel'); ?>"><i class="icon-remove"></i>  </a>
+                                </td>
+                           </tr>
+                        </table>
                     </div>
-                <?php } ?>
-            </form>   	
+                    <span class="span6 margin0" style="width:98%;">
+                    	<input type="hidden" name="entityname" value="Product" />
+                        <input type="hidden" id="id" name="id" value="<?php echo encode($product->getID()); ?>" />
+                        <input type="hidden" class="successurl" id="<?php echo URL_SUCCESS; ?>" name="<?php echo URL_SUCCESS; ?>" title="prices" />
+                        <input type="hidden" class="failureurl" id="<?php echo URL_FAILURE; ?>" name="<?php echo URL_FAILURE; ?>" title="prices" />
+                        <input type="hidden" id="<?php echo SUCCESS_MESSAGE; ?>" name="<?php echo SUCCESS_MESSAGE; ?>" value="<?php echo $this->translate("global_save_success"); ?>" />
+                        <input type="hidden" id="tab" name="tab" value="prices" />
+                        <div class="well row margin0" style="padding-left:10px;"> 
+                            <table class="table noborder">
+                            	<tr>
+                                    <td><label class="control-label">Total Cost (Ugx): <?php echo $this->translate("global_required_field_marker"); ?></label></td>
+                                    <td><input type="text" name="cost" id="cost" class="isnumber rightalign width75" value="<?php echo clean_num($product->getcost()); ?>" /><div class="cost_error"></div></td>
+                                </tr>
+                                <tr>
+                                    <td><label class="control-label blocked">Total Transaction Fees (Ugx):</label>
+									<span class="pagedescription rightalign lineblocked"><a>5% of net price</a></span><input type="hidden" name="trxrate" id="trxrate" value="5" /></td>
+                                    <td><label id="trxfee_display" class="bolded isdecimal width80 lineblocked rightalign">0</label><input type="hidden" name="trxfee" id="trxfee" value="" /></td>
+                                </tr>
+                                <tr>
+                                    <td style="width:28%;"><label class="control-label">Net Cost (Ugx)<?php //echo $this->translate("product_refno_label"); ?>:</label></td>
+                                    <td><label id="netprice_display" class="bolded isdecimal width80 lineblocked rightalign">0</label><input type="hidden" name="netprice" id="netprice" value="" />
+                                    
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><label class="control-label">Quantity Available:</label></td>
+                                    <td><input type="text" name="quantity" id="quantity" class="isdecimal rightalign width75" value="<?php echo clean_num($product->getquantity()); ?>" /><div class="quantity_error"></div>
+                                    </td>
+                                </tr>
+                                
+                            </table>
+                        </div>
+                        <?php if(isAdmin()){ ?>
+                        <div class="well row marginleft0" style="min-height:200px; width:97%; margin-top:10px;">
+                            <h3 class="well-legend">Break Down of Transaction Fees </h3>
+                            <table class="table table-stripped table-bordered hasheader" style="margin-top:15px;">
+                                <thead>
+                                    <tr class="rowheader">
+                                    	<td style="width:10%;" class="centeralign">#</td>
+                                        <td>Party<?php // echo $this->translate("season_input_type_label"); ?></td>
+                                        <td style="width:30%;">Amount<?php // echo $this->translate("season_input_name_label"); ?></td>
+                                        <td style="width:10%;"><span title="Delete row"><a>Del</a></span></td>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                
+                                </tbody>
+                            </table>
+                        </div>
+                        <?php } ?>
+                    </span>
+               </div>
+               <div id="bottom_buttons" class="makeabsolute" style="bottom:3px; right:15px;"></div>
+               <?php } ?>
+            </form>  
         </div>
         <div id="image">
             <h2><a href="<?php echo $this->baseUrl('product/list'); ?>" title="List Products">Products</a> > 
@@ -197,18 +554,11 @@ $(document).ready(function() {
             </h2>
             <form id="profileform-image" class="form-horizontal image">
             	<?php if($request->tab == 'image'){ ?>
-					<?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
-                        <div class="alert alert-success"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
-                    <?php } ?>  
-                    <?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
-                        <div class="alert alert-success"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
-                    <?php } ?>
-                    <div class="row" style="margin-left:0px;">
                     
-                    </div>
                 <?php } ?>
             </form>   	
         </div>
+        <?php if($product->isDownloadable()){ ?>
         <div id="download">
             <h2><a href="<?php echo $this->baseUrl('product/list'); ?>" title="List Products">Products</a> > 
                 <a href="<?php echo $this->baseUrl('product/view/id/'.encode($product->getID())); ?>" title="List Products"><?php echo $title; ?></a> > 
@@ -216,36 +566,155 @@ $(document).ready(function() {
             </h2>
             <form id="profileform-download" class="form-horizontal download">
             	<?php if($request->tab == 'download'){ ?>
-					<?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
-                        <div class="alert alert-success"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
-                    <?php } ?> 
-                    <?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
-                        <div class="alert alert-success"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
-                    <?php } ?> 
-                    <div class="row" style="margin-left:0px;">
                     
-                    </div>
                 <?php } ?>
             </form>   	
         </div>
+        <?php } ?>
         <div id="account">
         	<h2><a href="<?php echo $this->baseUrl('product/list'); ?>" title="List Products">Products</a> > 
                 <a href="<?php echo $this->baseUrl('product/view/id/'.encode($product->getID())); ?>" title="List Products"><?php echo $title; ?></a> > 
                 Settings 
             </h2>
-            <form id="profileform-farm" class="form-horizontal account">
+            <form id="profileform-account" class="form-horizontal account makerelative" action="<?php echo $posturl; ?>" method="post" style="padding-bottom:50px;">
                 <?php if($request->tab == 'account'){ ?>
-                	<?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
-                        <div class="alert alert-success"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
-                    <?php } ?> 
-                    <?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
-                        <div class="alert alert-success"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
-                    <?php } ?> 
-            		<span class="span6 marginleft0" style="width:98%;">
-                        
+                <div class="row margin0 makerelative">
+                    <div id="account_actions" class="makeabsolute" style="top:-40px; right:20px;">
+                        <table class="table border0 nohover margin0" id="top_buttons">                       
+                           <tr>		                    
+                                <td class="padding2"><button type="submit" class="btn btn-primary savethenview" title="<?php echo $this->translate('global_button_save'); ?>"><i class="icon-ok icon-white"></i> <?php echo $this->translate('global_button_save'); ?></button>
+                                </td>
+                                <td class="padding2"><a style="padding-top:6px; padding-bottom:6px;" href="<?php echo $this->baseUrl('product/view/id/'.encode($product->getID()).'/tab/account'); ?>" class="btn" title="<?php echo $this->translate('global_button_cancel'); ?>"><i class="icon-remove"></i>  </a>
+                                </td>
+                           </tr>
+                        </table>
+                    </div>
+                    <span class="span6 margin0" style="width:98%;">
+                    	<input type="hidden" name="entityname" value="Product" />
+                        <input type="hidden" id="id" name="id" value="<?php echo encode($product->getID()); ?>" />
+                        <input type="hidden" class="successurl" id="<?php echo URL_SUCCESS; ?>" name="<?php echo URL_SUCCESS; ?>" title="account" />
+                        <input type="hidden" class="failureurl" id="<?php echo URL_FAILURE; ?>" name="<?php echo URL_FAILURE; ?>" title="account" />
+                        <input type="hidden" id="<?php echo SUCCESS_MESSAGE; ?>" name="<?php echo SUCCESS_MESSAGE; ?>" value="<?php echo $this->translate("global_save_success"); ?>" />
+                        <input type="hidden" id="tab" name="tab" value="account" />
+                        <div class="well row margin0" style="padding-left:10px;"> 
+                            <table class="table noborder padding15">
+                                <tr>
+                                    <td style="width:30%;"><label class="control-label">Publish Status:</label></td>
+                                    <td><?php
+											 $values = getActiveStatus(); 						  
+											 $radio = new Zend_Form_Element_Radio('status',
+													  array(
+															  'multiOptions' => $values, 
+															  'view' => new Zend_View(),
+															  'disableLoadDefaultDecorators' => true,
+															  'separator' => '&nbsp;&nbsp;&nbsp;&nbsp;',
+															  'decorators' => array('ViewHelper',
+																				  array('HtmlTag', array('tag' => 'div', 'class' => array('inline', 'radio', 'zendradio'))) // use a sorrounding DIV with classes which are copied to the label by JQuery
+																			  )
+													  )
+											  );
+											  $radio->setValue($product->getstatus());
+											  echo $radio->render();
+										  ?><div id="status_error"></div>   
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><label class="control-label">Date Available:</label></td>
+                                    <td><input type="text" name="dateavailable" id="dateavailable" class="datefield width100" value="<?php echo changeMySQLDateToPageFormat($product->getdateavailable()); ?>" /><div id="dateavailable_error"></div></td>
+                                </tr>
+                                <tr>
+                                    <td><label class="control-label">Expires on:</label></td>
+                                    <td><input type="text" name="dateexpire" id="dateexpire" class="datefield width100" value="<?php echo changeMySQLDateToPageFormat($product->getdateexpire()); ?>" /><div id="dateexpire_error"></div></td>
+                                </tr>
+                                <tr>
+                                    <td><label class="control-label">Show Quantity Available:</label></td>
+                                    <td><?php
+											 $values = getActiveStatus(); 						  
+											 $radio = new Zend_Form_Element_Radio('showquantity',
+													  array(
+															  'multiOptions' => $values, 
+															  'view' => new Zend_View(),
+															  'disableLoadDefaultDecorators' => true,
+															  'separator' => '&nbsp;&nbsp;&nbsp;&nbsp;',
+															  'decorators' => array('ViewHelper',
+																				  array('HtmlTag', array('tag' => 'div', 'class' => array('inline', 'radio', 'zendradio'))) // use a sorrounding DIV with classes which are copied to the label by JQuery
+																			  )
+													  )
+											  );
+											  $radio->setValue($product->getshowquantity());
+											  echo $radio->render();
+										  ?><div id="showquantity_error"></div>   
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><label class="control-label">Reduce Quantity after Payment:</label></td>
+                                    <td><?php
+											 $values = getActiveStatus(); 						  
+											 $radio = new Zend_Form_Element_Radio('subtract',
+													  array(
+															  'multiOptions' => $values, 
+															  'view' => new Zend_View(),
+															  'disableLoadDefaultDecorators' => true,
+															  'separator' => '&nbsp;&nbsp;&nbsp;&nbsp;',
+															  'decorators' => array('ViewHelper',
+																				  array('HtmlTag', array('tag' => 'div', 'class' => array('inline', 'radio', 'zendradio'))) // use a sorrounding DIV with classes which are copied to the label by JQuery
+																			  )
+													  )
+											  );
+											  $radio->setValue($product->getsubtract());
+											  echo $radio->render();
+										  ?><div id="subtract_error"></div> 
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><label class="control-label">Minimum operational Quantity:</label></td>
+                                    <td><input type="text" name="minimum" id="minimum" class="width80 centeralign isdecimal" value="<?php echo clean_num($product->getminimum()); ?>" /><div id="minimum_error"></div></td>
+                                </tr>
+                                <tr>
+                                    <td><label class="control-label">Notify me via Email when Quantity is below minimum:</label></td>
+                                    <td><?php
+											 $values = getActiveStatus(); 						  
+											 $radio = new Zend_Form_Element_Radio('email_minimum',
+													  array(
+															  'multiOptions' => $values, 
+															  'view' => new Zend_View(),
+															  'disableLoadDefaultDecorators' => true,
+															  'separator' => '&nbsp;&nbsp;&nbsp;&nbsp;',
+															  'decorators' => array('ViewHelper',
+																				  array('HtmlTag', array('tag' => 'div', 'class' => array('inline', 'radio', 'zendradio'))) // use a sorrounding DIV with classes which are copied to the label by JQuery
+																			  )
+													  )
+											  );
+											  $radio->setValue($product->getemail_minimum());
+											  echo $radio->render();
+										  ?><div id="email_minimum_error"></div> </td>
+                                </tr>
+                                <tr>
+                                    <td><label class="control-label">Requires shipping:</label></td>
+                                    <td><?php
+											 $values = getActiveStatus(); 						  
+											 $radio = new Zend_Form_Element_Radio('shipping',
+													  array(
+															  'multiOptions' => $values, 
+															  'view' => new Zend_View(),
+															  'disableLoadDefaultDecorators' => true,
+															  'separator' => '&nbsp;&nbsp;&nbsp;&nbsp;',
+															  'decorators' => array('ViewHelper',
+																				  array('HtmlTag', array('tag' => 'div', 'class' => array('inline', 'radio', 'zendradio'))) // use a sorrounding DIV with classes which are copied to the label by JQuery
+																			  )
+													  )
+											  );
+											  $radio->setValue($product->getshipping());
+											  echo $radio->render();
+										  ?><div id="shipping_error"></div></td>
+                                </tr>
+                            </table>
+                        </div>
                     </span>
-            	<?php } ?>
-            </form>
+               </div>
+               <div id="bottom_buttons" class="makeabsolute" style="bottom:3px; right:15px;"></div>
+               <?php } ?>
+            </form>  
         </div>
     </div> 
 </div>

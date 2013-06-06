@@ -7,7 +7,7 @@
 	$id = decode($request->id);
 	$product->populate($id);
 	$store = $product->getStore();
-	
+	// debugMessage($product->toArray());
 	$userid = $session->getVar('userid');
 	$storeid = ''; $storepath = '';
 	$user->populate($userid);
@@ -19,23 +19,45 @@
 		$request->setParam('tab', 'general');
 	}
 	
+	$posturl = $this->baseUrl("product/edit");
 	$title = $product->getName();
 	$this->headTitle('Product | '.$title);
 	
 ?>
-
 <script>
 $(document).ready(function() {
+	// global javascript
+	$("#bottom_buttons").html($('#top_buttons').html());
 	
+	$("#profileform-categories .savethenview").click(function() {
+		$("#profileform-categories .successurl").val('<?php echo encode($this->baseUrl('product/view/tab/categories')); ?>');
+		$("#profileform-categories .failureurl").val('<?php echo encode($this->baseUrl('product/index/id/'.encode($product->getID()).'/tab/categories')); ?>');
+	});
 	
+	$("#profileform-categories .savethennext").click(function() {
+		$("#profileform-categories .successurl").val('<?php echo encode($this->baseUrl('product/index/tab/prices')); ?>');
+		$("#profileform-categories .failureurl").val('<?php echo encode($this->baseUrl('product/index/id/'.encode($product->getID()).'/tab/categories')); ?>');
+	});
 }); 
 </script>
 <style>
-
+#tabs form {
+	width:98%;
+}
+#tabs .alert.alert-success, #tabs .alert.alert-error {
+	width:88%;
+	margin-left:10px;
+}
 </style>
 <div id="tabs">
     <?php require APPLICATION_PATH."/views/scripts/product/leftcolumn.phtml"; ?>
-    <div class="span9 tab-content" id="center">   
+    <div class="span9 tab-content" id="center">
+		<?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
+        	<div class="alert alert-success"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
+        <?php } ?>	
+        <?php if($sessionhaserror) { ?>
+        	<div class="alert alert-error"><?php echo $session->getVar(ERROR_MESSAGE); ?></div>
+        <?php } ?>
         <div id="general">
             <form id="profileform-general" class="form-horizontal general">
             <?php if($request->tab == 'general'){ ?>
@@ -56,34 +78,22 @@ $(document).ready(function() {
                 	<a href="<?php echo $this->baseUrl('product/view/id/'.encode($product->getID())); ?>"><?php echo $title; ?></a> > 
 					General 
                 </h2>
-                <?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
-                    <div class="alert alert-success clear"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
-                <?php } ?>
                 <span class="span6 marginleft0" style="width:98%;">
                     <div class="well row marginleft0" style="padding-left:10px;">                        
                         <table class="table noborder profile">                       
 							<tr>
                                 <td style="width:45%;"><label class="control-label"><?php echo $this->translate("product_name_label"); ?>:</label><?php echo $product->getName(); ?></td>
                                 <td><label class="control-label"><?php echo $this->translate("product_type_label"); ?>:</label>
-									<?php
-                                    /*$values = getProductTypes();*/ $values = array('1' => 'Downloads', '2' => 'Services', '3' => 'TBD');
-									echo  $values[$product->getType()];
-                                ?></td>
+									<?php echo getProductTypes($product->getType()); ?></td>
                             </tr>
                             <tr>
-                                <td><label class="control-label"><?php echo $this->translate("product_refno_label"); ?>:</label><?php echo $product->getRefNo(); ?></td>
-                                <td><label class="control-label"><?php echo $this->translate("product_category_label"); ?>:</label>
-								<?php
-                                    /*$values = getProductTypes();*/ $values = array('1' => 'Category 1', '2' => 'Category 2');
-									echo  $values[$product->getCategoryID()];
-                                ?></td>
+                                <td colspan="2">&nbsp;</td>
                             </tr>
-                        </table>
-                    </div>
-                    <div class="well lighter row marginleft0" style="padding-left:10px; margin-top:10px;">                        
-                        <table class="table noborder profile">                       
-                           <h3 class="well-legend margin0">Description</h3>
-                           	
+                            <tr>
+                                <td colspan="2"><label class="control-label">Description<?php //echo $this->translate("product_refno_label"); ?>:</label>
+									<span style="width:95%; line-height:24px;" class="blocked"><?php echo nl2br($product->getdescription()); ?></span>
+                                </td>
+                            </tr>
                         </table>
                     </div>
                 </span> 
@@ -98,48 +108,414 @@ $(document).ready(function() {
             </h2>
             <form id="profileform-spec" class="form-horizontal spec">
                 <?php if($request->tab == 'spec'){ ?>
-					<?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
-                        <div class="alert alert-success clear"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
-                    <?php } ?>
-                    <div class="row" style="margin-left:0px;">
-                       
+                    <div class="row makerelative" style="margin-left:0px;">
+                        <div id="spec_actions" class="makeabsolute" style="top:5px; right:20px;">
+                            <table class="table border0 nohover margin0">                       
+                               <tr>		                    
+                                    <?php if(isAdmin() || isMerchant()){ ?>
+                                        <td class="padding2"><a class="btn btn-primary" href="<?php echo $this->baseUrl('product/index/id/'.encode($id).'/tab/spec'); ?>" id="update"><i class="icon-pencil icon-white"></i> Update</a></td>
+                                    <?php } ?>
+                               </tr>
+                            </table>
+                        </div>
                         
-                    </div>
+                        <span class="span6 margin0" style="width:98%;">
+                            <div class="well row margin0" style="padding-left:10px;"> 
+                                <table class="table noborder">                       
+                                    <tr>
+                                        <td style="width:20%;"><label class="control-label"><?php echo $this->translate("product_refno_label"); ?>: <?php echo $this->translate("global_required_field_marker"); ?></label></td>
+										<td><?php echo $product->getRefNo(); ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td><label class="control-label">Model<?php //echo $this->translate("product_refno_label"); ?>:</label></td>
+										<td><?php echo $product->getModel(); ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td><label class="control-label">Serial No<?php //echo $this->translate("product_category_label"); ?>:</label></td>
+										<td><?php echo $product->getserialno(); ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td><label class="control-label">Manufacturer<?php //echo $this->translate("product_refno_label"); ?>:</label></td>
+										<td><?php echo $product->getmanufacturer(); ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td><label class="control-label">Dimensions<?php //echo $this->translate("product_refno_label"); ?>:</label></td>
+                                        <td style="padding-top:0;">
+                                        	<?php $dim_unit = getDimensionUnits($product->getdimensionunit()); ?>
+                                            <table class="table table-condesed border0 nohover margin0">
+                                                <tr>
+                                                    <td style="width:90px; padding-left:0;"><label class="blocked">Length (<?php echo $dim_unit; ?>)</label>
+                                                        <?php echo isEmptyString($product->getlength()) ? '--' : clean_num($product->getlength()); ?>  
+                                                    </td> 
+                                                    <td style="width:90px; padding-left:0;"><label class="blocked">Width (<?php echo $dim_unit; ?>)</label>
+                                                        <?php echo isEmptyString($product->getwidth()) ? '--' : clean_num($product->getwidth()); ?> 
+                                                    </td>
+                                                    <td style="width:90px; padding-left:0;"><label class="blocked">Height (<?php echo $dim_unit; ?>)</label>
+                                                        <?php echo isEmptyString($product->getheight()) ? '--' : clean_num($product->getheight()); ?>
+                                                    </td> 
+                                                    <td></td>
+                                                  </tr>
+                                             </table>
+                                             <table class="table table-condesed border0 nohover margin0">
+                                                <tr>
+                                                    <td style="width:90px; padding-left:0;"><label class="blocked">Weight (<?php echo getWeightUnits($product->getweightunit()); ?>)</label>
+														<?php echo isEmptyString($product->getweight()) ? '--' : clean_num($product->getweight()); ?></td> 
+                                                    <td></td>
+                                                </tr>
+                                             </table>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="well row marginleft0" style="min-height:200px; width:97%; margin-top:10px;">
+                                <h3 class="well-legend">Custom Attributes</h3>
+                                <table class="table table-stripped table-bordered hasheader" style="margin-top:15px;">
+                                    <thead>
+                                        <tr class="rowheader">
+                                            <td style="width:40%;">Attribute<?php // echo $this->translate("season_input_type_label"); ?></td>
+                                            <td>Value<?php // echo $this->translate("season_input_name_label"); ?></td>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php 
+                                            $prodetails = $product->getAllAttributes();
+                                            $nooflines = $prodetails->count();
+                                            foreach($prodetails as $attribute){
+                                        ?>
+                                        <tr>
+                                            <td><?php echo $attribute->getField(); ?></td>
+                                            <td><?php echo $attribute->getValue(); ?></td>
+                                        </tr>
+                                        <?php } ?>
+                                    </tbody>               
+                                </table>
+                            </div>
+                        </span>
+                     </div>
                 <?php } ?>
             </form>
         </div>
-         <div id="price">
+        <div id="categories">
+            <h2><a href="<?php echo $this->baseUrl('product/list'); ?>" title="List Products">Products</a> > 
+                <a href="<?php echo $this->baseUrl('product/view/id/'.encode($product->getID())); ?>" title="List Products"><?php echo $title; ?></a> > 
+                Categories 
+            </h2>
+            <form id="profileform-categories" class="form-horizontal categories" action="<?php echo $posturl; ?>" method="post" style="padding-bottom:30px;">
+            	<?php if($request->tab == 'categories'){ ?>
+                	 <div class="row makerelative" style="margin-left:0px;">
+                        <div id="cat_actions" class="makeabsolute" style="top:-40px; right:20px;">
+                            <table class="table border0 nohover margin0" id="top_buttons">                       
+                               <tr>		                    
+								<?php if(isAdmin() || isMerchant()){ ?>
+                                    <td class="padding2"><button type="submit" class="btn btn-primary savethenview" title="<?php echo $this->translate('global_button_save'); ?>"><i class="icon-ok icon-white"></i> <?php echo $this->translate('global_button_save'); ?></button>
+                                    </td>
+                                    <td class="padding2"><button type="submit" class="btn btn-primary savethennext" title="<?php echo $this->translate('global_button_save_continue'); ?>"><i class="icon-ok icon-white"></i> <?php echo $this->translate('global_button_save_continue'); ?></button></td>
+                                    <td class="padding2"><a href="<?php echo $this->baseUrl('category/add/pgc/true/pid/'.encode($product->getID())); ?>" class="addpopup addproduct btn" title="New Category" rel="New Category" formtitle="indexform" successurl="<?php echo $this->baseUrl('product/view/id/'.encode($product->getID()).'/tab/categories'); ?>" action="<?php echo $this->baseUrl("category/create"); ?>"><i class="icon-plus"></i> New</a></td>
+                                <?php } ?>
+                                   
+                               </tr>
+                            </table>
+                        </div>
+					<link rel="stylesheet" href="<?php echo $this->baseUrl('javascript/custom/jqwidgets/jqwidgets/styles/jqx.base.css') ?>" type="text/css" />
+					<script type="text/javascript" src="<?php echo $this->baseUrl('javascript/custom/jqwidgets/scripts/gettheme.js') ?>"></script>
+                    <script type="text/javascript" src="<?php echo $this->baseUrl('javascript/custom/jqwidgets/jqwidgets/jqxcore.js') ?>"></script>
+                    <script type="text/javascript" src="<?php echo $this->baseUrl('javascript/custom/jqwidgets/jqwidgets/jqxbuttons.js') ?>"></script>
+                    <script type="text/javascript" src="<?php echo $this->baseUrl('javascript/custom/jqwidgets/jqwidgets/jqxscrollbar.js') ?>"></script>
+                    <script type="text/javascript" src="<?php echo $this->baseUrl('javascript/custom/jqwidgets/jqwidgets/jqxpanel.js') ?>"></script>
+                    <script type="text/javascript" src="<?php echo $this->baseUrl('javascript/custom/jqwidgets/jqwidgets/jqxtree.js') ?>"></script>
+                    <script type="text/javascript" src="<?php echo $this->baseUrl('javascript/custom/jqwidgets/jqwidgets/jqxcheckbox.js') ?>"></script>
+                    <script type="text/javascript">
+						$(document).ready(function () {
+							// Create jqxTree 
+							var theme = getDemoTheme();
+							// create jqxTree
+							$('#jqxTree').jqxTree({height: '500px', checkboxes: true, width: '500px', theme: theme });
+							$("#jqxTree").jqxTree('selectItem', $("#home")[0]);
+							
+						});
+					</script>
+					<style>
+                    	#tabs .jqx-tree-dropdown {
+							margin-left:25px;
+						}
+                    </style>
+                    <span class="margin0" style="width:94%;">
+                    	<input type="hidden" name="entityname" value="Product" />
+                        <input type="hidden" id="id" name="id" value="<?php echo encode($product->getID()); ?>" />
+                        <input type="hidden" class="successurl" id="<?php echo URL_SUCCESS; ?>" name="<?php echo URL_SUCCESS; ?>" title="categories" />
+                        <input type="hidden" class="failureurl" id="<?php echo URL_FAILURE; ?>" name="<?php echo URL_FAILURE; ?>" title="categories" />
+                        <input type="hidden" id="<?php echo SUCCESS_MESSAGE; ?>" name="<?php echo SUCCESS_MESSAGE; ?>" value="<?php echo $this->translate("global_save_success"); ?>" />
+                        <input type="hidden" id="tab" name="tab" value="categories" />
+                        <div class="well row margin0" style="padding-left:10px;"> 
+                            <table class="table noborder">
+                            	<tr>
+                                	<td><label class="control-label" style="padding:10px; font-weight:normal;">Select the checkbox next to categories that apply and click <b>'Save Changes'</b>. To add new sub categories, click <b>'New'</b></label>
+                                		<div id='jqxWidget'>
+                                            <div style='float: left;'>
+                                                <div id='jqxTree' style='float: left; margin-left: 20px;'>
+                                                    <ul>
+                                                        <li id='home' item-checked='true' item-expanded='true'><?php echo $product->getStore()->getMerchant()->getCategory()->getName(); ?>
+                                                        	<ul>
+                                                                <?php 
+																	$level1_categories = getLevelTwoCategories($userid);
+																?>
+                                                                <?php 
+																	foreach($level1_categories as $key => $value){
+																		$level2_categories = getLevelThreeCategories($userid, $key);
+																		$check1_result = $product->getCategoryEntry($key);
+																		if($check1_result->count() > 0){
+																			$ischeck1 = 1; 
+																		} else {
+																			$ischeck1 = 0;
+																		}
+																		
+																?>
+                                                                	<li id="check_<?php echo $key; ?>" item-expanded='true' <?php echo $ischeck1 == 1 ? "item-checked='true'" : "item-checked='false'"; ?>><?php echo $value; ?>
+                                                                    <!--<input type="checkbox" name="categories[]" id="cat_<?php //echo $key; ?>" claas="check_<?php //echo $key; ?>" />-->
+                                                                    	<?php if(count($level2_categories) > 0){ ?>
+																			<ul>
+																			<?php 
+                                                                                foreach($level2_categories as $skey => $svalue){
+																					$check2_result = $product->getCategoryEntry($skey);
+																					if($check2_result->count() > 0){
+																						$ischeck2 = 1; 
+																					} else {
+																						$ischeck2 = 0;
+																					}
+                                                                            ?>
+                                                                                <li <?php echo $ischeck2 == 1 ? "item-checked='true'" : "item-checked='false'"; ?>><?php echo $svalue; ?></li>
+                                                                            <?php } ?>
+                                                                            </ul>
+                                                                         <?php } ?>  
+                                                                    </li>
+                                                                <?php } ?>
+                                                            </ul>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                	</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </span>
+                    </div>
+                    <div id="bottom_buttons" class="makeabsolute" style="bottom:3px; right:0;"></div>
+                <?php } ?>
+            </form>
+        </div>
+        <div id="prices">
             <h2><a href="<?php echo $this->baseUrl('product/list'); ?>" title="List Products">Products</a> > 
                 <a href="<?php echo $this->baseUrl('product/view/id/'.encode($product->getID())); ?>"><?php echo $title; ?></a> > 
                 Price 
             </h2>
-            <form id="profileform-price" class="form-horizontal price">
-            	<?php if($request->tab == 'price'){ ?>
-					<?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
-                        <div class="alert alert-success"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
-                    <?php } ?>  
-                    <div class="row" style="margin-left:0px;">
-                    
+            <form id="profileform-prices" class="form-horizontal prices">
+                <?php if($request->tab == 'prices'){ ?>
+                    <div class="row makerelative" style="margin-left:0px;">
+                        <div id="spec_actions" class="makeabsolute" style="top:5px; right:20px;">
+                            <table class="table border0 nohover margin0">                       
+                               <tr>		                    
+                                    <?php if(isAdmin() || isMerchant()){ ?>
+                                        <td class="padding2"><a class="btn btn-primary" href="<?php echo $this->baseUrl('product/index/id/'.encode($id).'/tab/prices'); ?>" id="update"><i class="icon-pencil icon-white"></i> Update</a></td>
+                                    <?php } ?>
+                               </tr>
+                            </table>
+                        </div>
+                        <span class="span6 margin0" style="width:98%;">
+                            <div class="well row margin0" style="padding-left:10px;"> 
+                                <table class="table noborder padding15">
+                                	<tr>
+                                        <td style="width:28%;"><label class="control-label">Total Cost (Ugx):</label></td>
+                                        <td><?php echo isEmptyString($product->getcost()) ? '--' : formatNumber(clean_num($product->getcost())); ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td><label class="control-label blocked">Total Transaction Fees (Ugx):</label>
+                                        <span class="pagedescription rightalign lineblocked"><a>5% of net price</a></span></td>
+                                        <td><?php echo isEmptyString($product->gettrxfee()) ? '--' : formatNumber(clean_num($product->gettrxfee())); ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td><label class="control-label">Net Cost (Ugx)<?php //echo $this->translate("product_refno_label"); ?>:</label></td>
+                                        <td><?php echo isEmptyString($product->getnetprice()) ? '--' : formatNumber(clean_num($product->getnetprice())); ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td><label class="control-label">Quantity Available:</label></td>
+                                        <td><?php echo isEmptyString($product->getquantity()) ? '--' : formatNumber(clean_num($product->getquantity())); ?></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </span>
                     </div>
                 <?php } ?>
-            </form>   	
+             </form>   	
         </div>
         <div id="image">
             <h2><a href="<?php echo $this->baseUrl('product/list'); ?>" title="List Products">Products</a> > 
                 <a href="<?php echo $this->baseUrl('product/view/id/'.encode($product->getID())); ?>"><?php echo $title; ?></a> > 
-                Images 
+                <a href="<?php echo $this->baseUrl('product/view/id/'.encode($product->getID()).'/tab/image'); ?>" title="All Images">Images</a>
             </h2>
-            <form id="profileform-image" class="form-horizontal image">
+            <form id="profileform-image" class="form-horizontal image" method="post" enctype="multipart/form-data" action="<?php echo $this->baseUrl('product/picture'); ?>">
             	<?php if($request->tab == 'image'){ ?>
-					<?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
-                        <div class="alert alert-success"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
-                    <?php } ?>  
-                    <div class="row" style="margin-left:0px;">
-                    
-                    </div>
+                    <span class="span6 margin0" style="width:98%;">
+                        <div class="well lighter row margin0" style="padding-left:10px;"> 
+                            <?php if(isEmptyString($request->imgaction)){ ?>
+                            <table class="table table-stripped table-bordered hasheader" style="margin-top:15px;">
+                                <thead>
+                                    <tr class="rowheader">
+                                        <td style="width:15px;" class="centeralign">#</td>
+                                        <td style="width:80px;">Type</td>
+                                        <td>Image</td>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td style="height:250px;"></td>
+                                        <td>Profile Image</td>
+                                        <td><div class="row makerelative margin0 maxwidth clear">
+                                                <div id="profileinfo" class="pull-left"> 
+                                                    <img id="profileimage" src="<?php echo $product->getMediumPicturePath(); ?>" alt="Update Profile Photo" />
+                                                </div>
+                                            
+                                                <div id="profileimage" class="makeabsolute" style="top:5px; right:20px;">
+                                                    <table class="table border0 nohover margin0">                       
+                                                       <tr>		                    
+                                                            <?php if(isAdmin() || isMerchant()){ ?>
+                                                                <td class="padding2"><a class="btn btn-primary" href="<?php echo $this->baseUrl('product/view/id/'.encode($id).'/tab/image/imgaction/upload/type/1'); ?>" id="update"><i class="icon-upload icon-white"></i> Upload</a></td>
+                                                            <?php } ?>
+                                                       </tr>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>               
+                            </table>
+                            <?php }  ?>
+                            <?php if($request->imgaction == 'upload'){ ?>
+                            	<script type="text/javascript" src="<?php echo $this->baseUrl('javascript/custom/5.jquery.imgareaselect.min.js') ?>"></script>
+                            	<script>
+									$(document).ready(function() {
+										
+										<?php if(isEmptyString($request->crop)){ ?>
+											// form validation
+											$("#profileform-image").validate({		
+												// define the validation rules one field at a time
+												rules: {
+													profileimage: "required"
+												}, 
+												// the messages for each of the fields being validated
+												messages: {		
+													profileimage: "Please browse for image on computer<?php //echo $this->translate("person_firstname_error"); ?>"
+												},
+												// custom error positions
+												errorPlacement: function(error, element) {
+													switch(element.attr("name")){					
+														default:
+															error.appendTo("#"+element.attr("name")+"_error")
+															break;
+													}			
+												}
+											});
+										<?php } ?>
+										
+										<?php if(!isEmptyString($request->crop)){ ?>
+											$('#photo').imgAreaSelect({ 
+												aspectRatio: '1:1', 
+												handles: true,
+												fadeSpeed: 200, 
+												minWidth: 100,
+												maxWidth: 350,
+												x1: 0, y1: 0, x2: 200, y2: 200,
+												/*onSelectChange: preview,*/
+												onSelectEnd: function (img, selection) {
+													$('input[name="x1"]').val(selection.x1);
+													$('input[name="y1"]').val(selection.y1);
+													$('input[name="x2"]').val(selection.x2);
+													$('input[name="y2"]').val(selection.y2);
+													$('input[name="h"]').val(selection.height);
+													$('input[name="w"]').val(selection.width);            
+												}
+											});
+										<?php } ?>
+										
+										// remove box style if person has no profile picture
+										<?php if($product->hasProfileImage()){ ?>
+											$("#profileinfo").addClass('new_pic');
+										<?php } ?>
+										
+									}); 
+									</script>
+                            	<table class="table noborder margin0">
+                                    <tr>
+                                        <td style="vertical-align:top; width:20%; padding-left:0; padding-right:15px;">
+                                            <table class="table noborder margin0">
+                                                <tr>
+                                                    <td>
+                                                        <h3 class="well-legend">Current Image</h3>
+                                                        <div id="profileinfo" style="margin-top:15px;">
+                                                            <img id="xprofileimage" src="<?php echo $product->getMediumPicturePath(); ?>" />
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td style="vertical-align:top;">
+                                        	<input type="hidden" id="id" name="id" value="<?php echo encode($product->getID()); ?>" />
+                                        	<input type="hidden" class="successurl" id="<?php echo URL_SUCCESS; ?>" name="<?php echo URL_SUCCESS; ?>" value="<?php echo encode($this->baseUrl('product/view/id/'.encode($product->getID()).'/tab/image')); ?>" />
+                                            <input type="hidden" class="cropurl" id="cropurl" name="cropurl" value="<?php echo encode($this->baseUrl('product/view/id/'.encode($product->getID()).'/tab/image/imgaction/upload/crop/1')); ?>" />
+                                            <input type="hidden" class="failureurl" id="failureurl" name="failureurl>" value="<?php echo encode($this->baseUrl('product/view/id/'.encode($id).'/tab/image/imgaction/upload/type/1')); ?>" />
+                                            <?php if(isEmptyString($request->crop)){ ?>
+                                                <table class="table noborder margin0">
+                                                    <tr>
+                                                        <td style="vertical-align:top; border-bottom:2px dotted #e2e2e2; padding-bottom:50px;">
+                                                            <h3 class="well-legend">Upload new Image</h3>
+                                                            <label style="display:block; margin-top:5px;">You can upload a JPG or PNG file (Max size 2MB)</label>
+                                                            <input class="file" type="file" name="profileimage" id="profileimage" />
+                                                            
+                                                            <input type="hidden" id="step" name="step" value="upload" />
+                                                            <div id="profileimage_error"></div>
+                                                        </td>
+                                                    </tr>  
+                                                    <tr>
+                                                        <td style="padding-top:25px;"><button style="" type="submit" class="btn btn-primary" id="upload" name="submit" title="Upload"><i class="icon-upload icon-white"></i>&nbsp; Upload</button> or <a href="<?php echo $this->baseUrl('product/view/id/'.encode($product->getID()).'/tab/image'); ?>" title="<?php echo $this->translate("global_button_cancel"); ?>"><?php echo $this->translate('global_button_cancel'); ?></a>&nbsp;
+                                                        </td>
+                                                    </tr>       
+                                                </table>
+                                            <?php } else { ?>
+                                                <div class="makerelative">
+                                                    <button style="float:right; display:inline-block; top:-10px; right:75px;" type="submit" id="startcrop" class="btn btn-primary btn-large makeabsolute">Crop Image</button>
+                                                </div>
+                                                <table class="table noborder margin0">
+                                                    <tr>
+                                                        <td style="vertical-align:top; border-bottom:2px dotted #e2e2e2; padding-bottom:30px;">
+                                                            <h3 class="well-legend">Resize/Crop Image</h3>
+                                                            <label style="margin:15px; margin-left:-2px; display:block; font-size:13px; font-style:normal;" class="pagedescription">Drag the handles on the image canvas below to resize and click <b>'Crop Image'</b> to save changes.</label>
+                                                            <img src="<?php echo $product->getLargePicturePath(); ?>" id="photo" />
+                                                            <input type="hidden" name="x1" value="0" />
+                                                            <input type="hidden" name="y1" value="0" />
+                                                            <input type="hidden" name="x2" value="200" />
+                                                            <input type="hidden" name="y2" value="200" />
+                                                            <input type='hidden' name='w' value='200' />
+                                                            <input type='hidden' name='h' value='200' />
+                                                            <input type="hidden" id="step" name="step" value="crop" />
+                                                       </td>
+                                                    </tr>  
+                                                    <tr>
+                                                        <td>
+                                                        </td>
+                                                    </tr>       
+                                                </table>
+                                            <?php } ?>
+                                        </td>
+                                    </tr>
+                                </table>
+                            <?php } ?>
+                        </div>
+                    </span>
                 <?php } ?>
             </form>   	
         </div>
+        <?php if($product->isDownloadable()){ ?>
         <div id="download">
             <h2><a href="<?php echo $this->baseUrl('product/list'); ?>" title="List Products">Products</a> > 
                 <a href="<?php echo $this->baseUrl('product/view/id/'.encode($product->getID())); ?>"><?php echo $title; ?></a> > 
@@ -147,27 +523,72 @@ $(document).ready(function() {
             </h2>
             <form id="profileform-download" class="form-horizontal download">
             	<?php if($request->tab == 'download'){ ?>
-					<?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
-                        <div class="alert alert-success"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
-                    <?php } ?>  
                     <div class="row" style="margin-left:0px;">
                     
                     </div>
                 <?php } ?>
             </form>   	
         </div>
+        <?php } ?>
         <div id="account">
         	<h2><a href="<?php echo $this->baseUrl('product/list'); ?>" title="List Products">Products</a> > 
                 <a href="<?php echo $this->baseUrl('product/view/id/'.encode($product->getID())); ?>"><?php echo $title; ?></a> > 
                 Settings 
             </h2>
-            <form id="profileform-farm" class="form-horizontal account">
+            <form id="profileform-account" class="form-horizontal account">
                 <?php if($request->tab == 'account'){ ?>
-            		<span class="span6 marginleft0" style="width:98%;">
+                    <div class="row makerelative" style="margin-left:0px;">
+                        <div id="spec_actions" class="makeabsolute" style="top:5px; right:20px;">
+                            <table class="table border0 nohover margin0">                       
+                               <tr>		                    
+                                    <?php if(isAdmin() || isMerchant()){ ?>
+                                        <td class="padding2"><a class="btn btn-primary" href="<?php echo $this->baseUrl('product/index/id/'.encode($id).'/tab/account'); ?>" id="update"><i class="icon-pencil icon-white"></i> Update</a></td>
+                                    <?php } ?>
+                               </tr>
+                            </table>
+                        </div>
                         
-                    </span>
-            	<?php } ?>
-            </form>
+                        <span class="span6 margin0" style="width:98%;">
+                            <div class="well row margin0" style="padding-left:10px;"> 
+                                <table class="table noborder padding15">
+                                    <tr>
+                                        <td style="width:30%;"><label class="control-label">Publish Status:</label></td>
+                                        <td><?php echo getActiveStatus($product->getstatus()); ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td><label class="control-label">Date Available:</label></td>
+                                        <td><?php echo isEmptyString($product->getdateavailable()) ? '--' : changeMySQLDateToPageFormat($product->getdateavailable()); ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td><label class="control-label">Expires on:</label></td>
+                                        <td><?php echo isEmptyString($product->getdateexpire()) ? '--' : changeMySQLDateToPageFormat($product->getdateexpire()); ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td><label class="control-label">Show Quantity Available:</label></td>
+                                        <td><?php echo getActiveStatus($product->getshowquantity()); ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td><label class="control-label">Reduce Quantity after Payment:</label></td>
+                                        <td><?php echo getActiveStatus($product->getsubtract()); ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td><label class="control-label">Minimum operational Quantity:</label></td>
+                                        <td><?php echo isEmptyString($product->getminimum()) ? '--' : formatNumber(clean_num($product->getminimum())); ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td><label class="control-label">Notify me via Email when Quantity is below minimum:</label></td>
+                                        <td><?php echo getActiveStatus($product->getemail_minimum()); ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td><label class="control-label">Requires shipping:</label></td>
+                                        <td><?php $result = getActiveStatus(); echo $result[$product->getshipping()]; ?></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </span>
+                    </div>
+                <?php } ?>
+             </form> 
         </div>
     </div> 
 </div>

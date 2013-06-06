@@ -1,0 +1,270 @@
+<?php
+	require_once APPLICATION_PATH.'/includes/header.php';
+	
+	$searchnames = '';
+	$title = "Products";	
+	$listurl = $this->baseUrl('product/list');
+	$allowclear = false;
+	$user = new UserAccount();
+	
+	if (!isEmptyString($request->letter)){
+		$searchnames .= "Browse By: <b>".strtoupper($request->letter)."</b>";
+	}
+	
+	$paginate = new Pagination();	
+	$paginate->setView($this);
+	# set the search columns to be used on this list
+	$paginate->setSearchColumns(array("p.name","p.refno","p.model"));
+	$paginate->setFilterColumns(array("p.storeid"));
+	// $paginate->setDefaultSortBy("p.datecreated");	
+	// $paginate->setDefaultSortOrder("DESC");
+	$paginate->setItemCountPerPage("25");
+	
+	# define the letter to be clicked to ease navigation 
+	$where_query = " WHERE p.id <> '' ";
+
+	if(!isEmptyString($request->status)){
+		$where_query .= " AND (p.`status` = '".$request->status."%') ";
+		$allowclear = true;
+	}
+	if(!isEmptyString($request->name)){
+		$where_query .= " AND (p.name LIKE '%".$request->name."%') ";
+		$allowclear = true;
+	}
+	
+	if(!isEmptyString($request->letter)){
+		$where_query .= " AND (p.`name` LIKE '".$request->letter."%') ";
+		$allowclear = true;
+	}
+	
+	if(!isEmptyString($request->startdate) && isEmptyString($request->enddate) ){
+		$start = date('Y-m-d', strtotime($request->startdate));
+		$where_query .= "  AND (TO_DAYS(p.datecreated) >= TO_DAYS('".$start."'))"; 
+	}
+	if(!isEmptyString($request->startdate) && !isEmptyString($request->enddate) ){
+		$start = date('Y-m-d', strtotime($request->startdate));
+		$end = date('Y-m-d', strtotime($request->enddate));
+		$where_query .= " AND (TO_DAYS(p.datecreated) BETWEEN TO_DAYS('".$start."') AND TO_DAYS('".$end."'))";
+	}
+	
+	$order = trim($request->order);
+	$order_query = " ";
+	if(isEmptyString($order)){
+		$order = 1;
+	}
+	if($order == 1){
+		$order_query = " ORDER BY p.datecreated DESC ";
+	}
+	if($order == 4){
+		$order_query = " ORDER BY p.datecreated ASC ";
+	}
+	if($order == 2){
+		$order_query = " ORDER BY p.name ASC ";
+	}
+	if($order == 3){
+		$order_query = " ORDER BY p.name DESC ";
+	}
+	
+	$groupstring = "";
+	$userid = $session->getVar('userid');
+	$storeid = ''; $storepath = '';
+	$user->populate($userid);
+	if($user->isMerchant()){
+		$storeid = $user->getMerchant()->getStore()->getID();
+		$where_query .= " AND (p.storeid = '".$storeid."') ";
+		$storepath = '/storeid/'.encode($storeid);
+	}
+	
+	$paginate->processPost($request->getParams());
+	$all_results_query = "SELECT p.*, p.id as pid, p.name as pname, p.datecreated as pdate, p.createdby as pcreatedby, s.*, s.id as sid, s.name as storename, concat(u.firstname,' ',u.lastname) as creator FROM product p inner join store s on (p.storeid = s.id) inner join useraccount u on (p.createdby = u.id) ".$where_query." ".$paginate->getSearchAndFilterSQL()." GROUP BY p.id ".$order_query;
+	
+	// debugMessage($all_results_query); // exit();
+	$paginate->setItemCountFromSQLQuery($all_results_query);
+	$current_results_query = $all_results_query." ".$paginate->getSQLLimit();
+	
+	$conn = Doctrine_Manager::connection(); 
+	$result = $conn->fetchAll($current_results_query);
+	$has_no_data = (count($result) == 0) ? true : false; 
+	
+	
+	$this->headTitle($title);
+	$showloading = true;
+?>
+<script>
+$(document).ready(function() {
+	var dateofregOpts = datepickerOpts;
+	datepickerOpts.dateFormat = '<?php echo $config->dateandtime->javascriptmediumformat; ?>';
+	// dateofregOpts.maxDate = new Date();
+	$("#startdate, #enddate").datepicker(datepickerOpts);
+	
+}); 
+</script>
+<style>	
+.alert.alert-success {
+	clear:both;
+}
+.namelabel {
+	font-weight:normal;
+	font-size:14px;
+}
+/*#searchbox label.control-label {
+	display:block;
+}*/
+</style>
+<div>
+	<?php require APPLICATION_PATH."/views/scripts/index/leftcolumn.phtml"; ?>
+    <div id="centercolumn">
+        <form action="<?php echo $this->baseUrl("product/listsearch"); ?>" method="get" id="listform" class="form-search">
+    	<h1><?php echo $title; ?><?php echo $groupstring; ?></h1>
+        <div class="wellcontent" style=" margin-top:-10px;">
+            <div class=" blocked clear" style="position:relative; margin-top:25px;">
+            	<div class="makeabsolute" style="right:5px; top:-35px;">
+                	<?php if(isAdmin() || isMerchant()){ ?>
+                        <a href="<?php echo $this->baseUrl('product/add/pgc/true'.$storepath); ?>" class="addpopup addproduct btn btn-primary btn-mini" title="New Product" rel="New Product" id="newproduct" formtitle="indexform" successurl="<?php echo $this->baseUrl('product/addsuccess'); ?>" action="<?php echo $this->baseUrl("product/create"); ?>"><i class="icon-plus icon-white"></i> New Product</a>
+                   <?php } ?> 
+                </div>
+                <ul id="searchbox">
+                    <li>
+                        <a style="padding-left:0; padding-right:0; width:100%;">
+                            <table id="directorysearchtable" class="table noborder margin0">
+                                <tr>
+                                    <td style="width:100px; padding-left:2px; padding-right:2px;">
+                                    	<label class="control-label blocked">Ordering:</label>
+                                        <?php
+                                            $allorders = array('1' => 'Latest First', '4'=>'Earliest First', '2'=>'Alphabetical (Firstname)','3'=>'Alphabetical (Lastname)', '5'=>'Alphabetical (Company name)');
+                                            $ordersdropdown = new Zend_Form_Element_Select('order',
+                                                                array(
+                                                                    'multiOptions' => $allorders,
+                                                                    'view' => new Zend_View(),
+                                                                    'decorators' => array('ViewHelper'),
+                                                                    'class' => array('gender','span2','autofilter')
+                                                                )
+                                            );  
+                                            $ordersdropdown->setValue($request->getParam('order')); 
+                                            echo $ordersdropdown->render();
+                                        ?>
+                                    </td>
+                                    <td style="width:100px; padding-left:2px; padding-right:2px;">
+                                        
+                                        
+                                    </td>
+                                    <td style="width:250px; padding-left:2px; padding-right:2px;">
+                                    	
+                                    </td>
+                                    <td style="padding:31px 3px 0 0; text-align:right;">
+                                    	<div class="makerelative pull-left">
+                                            <input type="hidden" name="advanced" id="advanced" value="<?php echo $request->getParam('advanced'); ?>" />
+                                            <input style="width:175px;" name="searchterm" id="searchterm" value="<?php echo $request->searchterm; ?>" type="text" class="input-medium xsearch-query span2 pull-right" placeholder="Search Products">
+                                            <a style="display:block; float:right; text-align:right; position:absolute; right:5px; top:2px;" href="<?php echo $listurl; ?>" title="Reset list or clear all filters" id="reset" class="removeline close button btn" rel="email">&times;</a>
+                                        </div>
+                                        <div class="pull-right">
+                                        	<button type="submit" id="searchbutton" class="btn" style="padding:6px 10px;"><i class="icon-search"></i></button>
+                                        	<input type="hidden" name="letter" id="letter" value="<?php echo $request->getParam('letter'); ?>" />
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2"><label class="control-label">Added From: </label>
+                                      	<input name="startdate"  id="startdate" type="text"  class="datefield startdate width100 autosearch" value="<?php echo $request->startdate; ?>"  /></td>
+                                    <td><label class="control-label">To: </label>
+                                    	<input name="enddate" id="enddate" type="text" class="datefield width100 autosearch"  value="<?php echo $request->enddate; ?>" />
+                                      	<div class="blocked" id="enddate_error"></div></td>
+                                    <td></td>
+                                </tr>
+                            </table>
+                        </a>
+                    </li>
+                </ul>
+          </div>
+            <?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE))){ ?>
+                <div class="alert alert-success clear"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
+            <?php } ?>
+            <?php if(!isEmptyString($session->getVar(ERROR_MESSAGE))){ ?>
+                <div class="alert alert-error clear"><?php echo $session->getVar(ERROR_MESSAGE); ?></div>
+            <?php } ?>
+            <div class="alphabetlist pull-left"><a href="<?php echo $listurl; ?>" title="All Products">All</a>&nbsp;&nbsp;|&nbsp;&nbsp;<?php echo $paginate->getAlphabetString(); ?></div>
+            <label style="text-align:left;" class="searchedterm control-label pull-left leftalign"><?php echo $searchnames; ?></label>
+            <?php if (!$has_no_data) { ?>
+            	<div class="paginatecustom"><?php echo sprintf($this->translate("global_list_counter"), $paginate->getItemCounterText()); ?></div>
+            <?php } ?>
+			
+			<?php if ($has_no_data) { ?>
+            	<div style="clear:both;" class="alert alert-info margin5"><?php echo $this->translate("global_list_norecords_error"); ?></div>
+            <?php } else { ?>
+            	<div class="blocked clear" style="width:auto; max-width:100%; overflow-x:scroll; padding:2px; border:2px solid #3b759a; border-bottom-width:4px; border-right:none;">
+                    <table class="table list table-striped" style="">
+                        <thead>
+                            <tr>
+                            	<td><img src="<?php echo $this->baseUrl('images/spacer.gif'); ?>" style="width:15px; height:2px;" /></td>
+                                <td>Actions <img src="<?php echo $this->baseUrl('images/spacer.gif'); ?>" style="width:70px; height:2px;" /></td>
+                                <td>Image<img src="<?php echo $this->baseUrl('images/spacer.gif'); ?>" style="width:80px; height:2px;" /></td>
+                                <td class="wrapping">Item Name <img src="<?php echo $this->baseUrl('images/spacer.gif'); ?>" style="width:100px; height:2px;" /></td>
+                                <td class="wrapping">Ref No#<img src="<?php echo $this->baseUrl('images/spacer.gif'); ?>" style="width:30px; height:2px;" /></td>
+                                <?php if(isAdmin()){ ?>
+                                	<td class="wrapping">Store<img src="<?php echo $this->baseUrl('images/spacer.gif'); ?>" style="width:100px; height:2px;" /></td>
+                                <?php } ?>
+                                <td class="wrapping">Quantity <img src="<?php echo $this->baseUrl('images/spacer.gif'); ?>" style="width:15px; height:2px;" /></td>
+                                <td class="wrapping">Price (UGX)</td>
+                                <td class="wrapping">Status <img src="<?php echo $this->baseUrl('images/spacer.gif'); ?>" style="width:30px; height:2px;" /></td>
+                                <?php if(isAdmin()){ ?>
+                                <td class="wrapping">Date Added <img src="<?php echo $this->baseUrl('images/spacer.gif'); ?>" style="width:30px; height:2px;" /></td>
+                                <td class="wrapping">Added By<img src="<?php echo $this->baseUrl('images/spacer.gif'); ?>" style="width:30px; height:2px;" /></td>
+                                <?php } ?>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php 				  		
+                                foreach($result as $line){
+                                    $id = $line['pid'];	
+                                    $storename = $line['storename'];
+									$storeid = $line['storeid'];
+									
+									$hasprofileimage = false;
+									$real_path = APPLICATION_PATH.DIRECTORY_SEPARATOR."..".DIRECTORY_SEPARATOR."public".DIRECTORY_SEPARATOR."uploads".DIRECTORY_SEPARATOR."stores".DIRECTORY_SEPARATOR."store_";
+									$real_path = $real_path.$storeid.DIRECTORY_SEPARATOR."product_".$id.DIRECTORY_SEPARATOR."large_".$line['profilephoto'];
+									if(file_exists($real_path) && !isEmptyString($line['profilephoto'])){
+										$hasprofileimage = true;
+									}
+									$baseUrl = Zend_Controller_Front::getInstance()->getBaseUrl();
+									$photo_path = '';
+									$photo_path = $baseUrl.'/uploads/default/default_thumbnail_product.jpg';
+									if($hasprofileimage){
+										$photo_path = $baseUrl.'/uploads/stores/store_'.$storeid.'/product_'.$id.'/thumbnail_'.$line['profilephoto'];
+									}
+									
+                            ?>
+                                <tr>
+                                	<td class="centeralign"><input type="checkbox" id="item_<?php echo $id; ?>" name="item_<?php echo $id; ?>" value="" class="" /></td>
+                                    <td class="leftalign">
+                                        <a class="btn btn-mini lineblocked" href="<?php echo $this->baseUrl('product/view/id/'.encode($id)); ?>" title="View"><i class="icon-info-sign"></i></a>&nbsp;
+                                        <a class="btn btn-mini lineblocked" href="<?php echo $this->baseUrl('product/index/id/'.encode($id)); ?>" title="Update"><i class="icon-pencil"></i></a>&nbsp;
+                                    </td>
+                                    <td><div id="thumbinfo">
+                                    	<a href="<?php echo $this->baseUrl("product/view/id/".encode($id)); ?>"><img class="profileimage" src="<?php echo $photo_path; ?>" /></a></div>
+                                    </td>
+                                    <td><?php echo $line['pname']; ?></td>
+                                    <td><?php echo $line['refno']; ?></td>
+                                    <?php if(isAdmin()){ ?>
+                                        <td><?php echo $storename; ?></td>
+                                    <?php } ?>
+                                    <td><?php echo isEmptyString($line['quantity']) || $line['quantity'] == 0  ? '--' : $line['quantity']; ?></td>
+                                    <td class="rightalign"><?php echo isEmptyString($line['price']) ? '--' : formatNumber($line['price']); ?></td>
+                                    <td><?php echo isEmptyString($line['status']) || $line['status'] == 0 ? 'Disabled' : 'Enabled'; ?></td>
+                                    <?php if(isAdmin()){ ?>
+                                        <td><?php echo date('d/m/Y H:i', strtotime($line['pdate'])); ?></td>
+                                        <td><?php echo isEmptyString($line['pcreatedby']) ? '--' : $line['creator']; ?></td>
+                                    <?php } ?>
+                                </tr>
+                            <?php } ?>
+                        </tbody>
+                    </table>
+                </div>
+            	<?php echo $paginate->getPaginationLinks(); ?>  
+            <?php } ?>
+		</div> 
+       </form>         
+	</div>
+</div>
+<?php
+	require_once APPLICATION_PATH.'/includes/footer.php';
+?>
