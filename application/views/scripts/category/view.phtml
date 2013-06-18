@@ -232,7 +232,7 @@ $(document).ready(function() {
 																?>
                                                                 <?php 
 																	foreach($level1_categories as $key => $value){
-																		$level2_categories = getLevelThreeCategories($userid, $key);
+																		$level2_categories = getLevelThreeCategories($product->getStoreID(), $key);
 																		$check1_result = $product->getCategoryEntry($key);
 																		if($check1_result->count() > 0){
 																			$ischeck1 = 1; 

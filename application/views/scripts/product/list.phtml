@@ -107,20 +107,16 @@ $(document).ready(function() {
 	font-weight:normal;
 	font-size:14px;
 }
-/*#searchbox label.control-label {
-	display:block;
-}*/
 </style>
 <div>
-	<?php require APPLICATION_PATH."/views/scripts/index/leftcolumn.phtml"; ?>
-    <div id="centercolumn">
+    <div id="centercolumn" style="width:100%;">
         <form action="<?php echo $this->baseUrl("product/listsearch"); ?>" method="get" id="listform" class="form-search">
     	<h1><?php echo $title; ?><?php echo $groupstring; ?></h1>
         <div class="wellcontent" style=" margin-top:-10px;">
             <div class=" blocked clear" style="position:relative; margin-top:25px;">
-            	<div class="makeabsolute" style="right:5px; top:-35px;">
+            	<div class="makeabsolute" style="right:5px; top:-40px;">
                 	<?php if(isAdmin() || isMerchant()){ ?>
-                        <a href="<?php echo $this->baseUrl('product/add/pgc/true'.$storepath); ?>" class="addpopup addproduct btn btn-primary btn-mini" title="New Product" rel="New Product" id="newproduct" formtitle="indexform" successurl="<?php echo $this->baseUrl('product/addsuccess'); ?>" action="<?php echo $this->baseUrl("product/create"); ?>"><i class="icon-plus icon-white"></i> New Product</a>
+                        <a href="<?php echo $this->baseUrl('product/add/pgc/true'.$storepath); ?>" class="addpopup addproduct btn btn-primary" title="New Product" rel="New Product" id="newproduct" formtitle="indexform" successurl="<?php echo $this->baseUrl('product/addsuccess'); ?>" action="<?php echo $this->baseUrl("product/create"); ?>"><i class="icon-plus icon-white"></i> New Product</a>
                    <?php } ?> 
                 </div>
                 <ul id="searchbox">
@@ -148,13 +144,13 @@ $(document).ready(function() {
                                         
                                         
                                     </td>
-                                    <td style="width:250px; padding-left:2px; padding-right:2px;">
+                                    <td style="padding-left:2px; padding-right:2px;">
                                     	
                                     </td>
-                                    <td style="padding:31px 3px 0 0; text-align:right;">
+                                    <td style="padding:31px 3px 0 0; text-align:right; width:260px;">
                                     	<div class="makerelative pull-left">
                                             <input type="hidden" name="advanced" id="advanced" value="<?php echo $request->getParam('advanced'); ?>" />
-                                            <input style="width:175px;" name="searchterm" id="searchterm" value="<?php echo $request->searchterm; ?>" type="text" class="input-medium xsearch-query span2 pull-right" placeholder="Search Products">
+                                            <input style="width:200px;" name="searchterm" id="searchterm" value="<?php echo $request->searchterm; ?>" type="text" class="input-medium xsearch-query span2 pull-right" placeholder="Search Products">
                                             <a style="display:block; float:right; text-align:right; position:absolute; right:5px; top:2px;" href="<?php echo $listurl; ?>" title="Reset list or clear all filters" id="reset" class="removeline close button btn" rel="email">&times;</a>
                                         </div>
                                         <div class="pull-right">
@@ -197,14 +193,14 @@ $(document).ready(function() {
                             <tr>
                             	<td><img src="<?php echo $this->baseUrl('images/spacer.gif'); ?>" style="width:15px; height:2px;" /></td>
                                 <td>Actions <img src="<?php echo $this->baseUrl('images/spacer.gif'); ?>" style="width:70px; height:2px;" /></td>
-                                <td>Image<img src="<?php echo $this->baseUrl('images/spacer.gif'); ?>" style="width:80px; height:2px;" /></td>
+                                <td>Image<img src="<?php echo $this->baseUrl('images/spacer.gif'); ?>" style="width:50px; height:2px;" /></td>
                                 <td class="wrapping">Item Name <img src="<?php echo $this->baseUrl('images/spacer.gif'); ?>" style="width:100px; height:2px;" /></td>
                                 <td class="wrapping">Ref No#<img src="<?php echo $this->baseUrl('images/spacer.gif'); ?>" style="width:30px; height:2px;" /></td>
                                 <?php if(isAdmin()){ ?>
                                 	<td class="wrapping">Store<img src="<?php echo $this->baseUrl('images/spacer.gif'); ?>" style="width:100px; height:2px;" /></td>
                                 <?php } ?>
                                 <td class="wrapping">Quantity </td>
-                                <td class="wrapping">Price (UGX)</td>
+                                <td class="wrapping">Net Price (UGX)</td>
                                 <td class="wrapping">Trx Fees (UGX)</td>
                                 <td class="wrapping">Status <img src="<?php echo $this->baseUrl('images/spacer.gif'); ?>" style="width:30px; height:2px;" /></td>
                                 <?php if(isAdmin()){ ?>

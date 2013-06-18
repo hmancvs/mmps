@@ -485,6 +485,10 @@ $(document).ready(function() {
 		$('#letter').val(letter);
 		$("#listform").submit();
 	});
+	
+	$("a.gonowhere").each(function(){
+		$(this).attr('href', 'javascript: void(0)');
+	});
 }); 
 //Use window.load and not document.ready for effective equal heights
 $(window).load(function() {
@@ -518,19 +522,21 @@ $(window).load(function() {
 ?>
 <body data-spy="scroll" data-target=".subnav" data-offset="50"<?php echo $bodyclass; ?>>
 <!--Header Container-->
-<div class="navbar navbar-fixed-top" id="headercontainer">
-    <div class="navbar-inner" id="headertop">
+<div class="" id="headercontainer" style="">
+    <div class="automargin" id="headertop">
 		<?php require_once APPLICATION_PATH.'/views/scripts/index/header.phtml'; ?>
     </div>
 </div>
+<div class="container" id="navigation">
+	<?php require_once APPLICATION_PATH.'/views/scripts/index/headermenu.phtml'; ?>
+</div>
 <!--Main Container-->
 <div class="container prettyprint linenums" id="maincontainer">
-	<?php require_once APPLICATION_PATH.'/views/scripts/index/navigation.phtml'; ?>	
 	<div class="row-fluid" id="contentwrapper">
 		<div class="" id="contentcolumn"><?php echo $this->layout()->content; ?></div>
     </div>
 </div>
-<footer class="footer well <?php echo $bodyclassonly; ?>"><?php require_once APPLICATION_PATH.'/views/scripts/index/footer.phtml'; ?></footer>
+<footer class="footer well container automargin <?php echo $bodyclassonly; ?>"><?php require_once APPLICATION_PATH.'/views/scripts/index/footer.phtml'; ?></footer>
 <div class="modal hide" id="dialog">
     <div class="modal-header">
     	<button type="button btn" class="close" data-dismiss="modal">&times;</button>

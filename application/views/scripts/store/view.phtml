@@ -1,0 +1,95 @@
+<?php
+	require_once APPLICATION_PATH.'/includes/header.php';
+	
+	$title = "Store Home";
+	$store = new Store();
+	
+	$id = $request->getParam('id');
+	if(!isEmptyString($id)){
+		$store->populate($id);
+		// debugMessage($store->toArray());
+	}
+	
+	$username = $request->getParam('username');
+	if(!isEmptyString($username)){
+		$store->findByUsername($username);
+		// debugMessage($store->toArray());
+	}
+	if(!isEmptyString($store->getID())){
+		$isstore = true;
+		$title = $store->getName();
+	} else {
+		$isstore = false;
+		$title = $username;
+	}
+	
+	$this->headTitle($title);
+	
+?>
+
+<style>
+#contentcolumn {
+	padding:15px 10px 15px 10px;
+	width:auto;
+}
+</style>
+<div>
+	<h1><?php // echo $title; ?></h1>
+    <?php if(!$isstore){ ?>
+    	<div style="padding:20px 5px;" class="alert alert-info clear margin0 centeralign">The store <b><?php echo $title; ?></b> does not exist</div>
+    <?php } else { ?>
+        <table class="table margin0 padding0 border0 nohover">
+            <tr>
+                <td>
+                    <div class="homecover" style="width:98%; height:280px; margin-left:8px;">
+                        <img class="pull-left leftalign" src="<?php echo $store->getCoverPath(); ?>" />
+                        <span style="display:block; float:right; width:235px; height:280px;">
+                            <h2 style="font-size:12px; padding:5px; ">Welcome to <?php echo $store->getName(); ?></h2>
+                            <label class="blocked padding5" style="line-height:20px; color:#666666; font-size:14px;">
+                                <?php echo isEmptyString($store->getDescription()) ? 'Store description goes here' : $store->getDescription(); ?>
+                            </label>
+                        </span>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td class="padding0" style="padding-top:20px; padding-left:3px;">
+                    <ul class="default widget">
+                    	<li style="width:100%; height:300px;">
+                        	<h2>Featured</h2>
+                            <ul class="default" style="margin-top:5px; margin-bottom:10px; margin-left:10px;">
+                            	<?php 
+									$products = $store->getFeaturedProducts();
+									// debugMessage($products->toArray());
+									foreach($products as $product){
+										$viewurl = $this->baseUrl('store/product/id/'.encode($product->getID()));
+								?>
+                            	<li class="imagecontainer nobg" style="width:160px; height:180px; margin-right:15px; padding:10px; border-color:#E1E0E0;">
+                                	<label class="blocked maxwidth bolded centeralign" style="font-size:12px;"><a href="<?php echo $viewurl; ?>" title="Details"><?php echo $product->getName(); ?></a></label>
+                                	<div class="thumbinfo" style="background-color:#fff; border-color:#dddddd; margin-left:45px;"> 
+                                        <a href="<?php echo $viewurl; ?>" title="Details" class="blocked"><img class="profileimage" src="<?php echo $product->getThumbnailPicturePath(); ?>" /></a>
+                                    </div>
+                                    <table class="table margin0 padding2 nohover nobg" style="margin-left:30px; width:auto;">
+                                    	<tr>
+                                        	<td class="centeralign"><span class="blocked bolded"><?php echo formatNumber($product->getCost()); ?> shs</span></td>
+                                        </tr>
+                                        <tr>
+                                        	<td class="centeralign"><a href="<?php echo $this->baseUrl('store/cart/id/'.encode($store->getID()).'/pid/'.encode($product->getID())); ?>" title="Add to Cart" class="btn btn-primary btn-mini"><i class="icon-white icon-plus"></i> Add to Cart</a></td>
+                                        </tr>
+                                        <tr>
+                                        	<td class="centeralign"><a href="<?php echo $this->baseUrl('store/watchlist/id/'.encode($store->getID()).'/pid/'.encode($product->getID())); ?>" title="Add to Watch List" class="centeralign">Add to Watch List</a></td>
+                                        </tr>
+                                    </table>
+                                </li>
+                                <?php } ?>
+                            </ul>
+                        </li>
+                    </ul>
+                </td>
+            </tr>
+        </table>
+	<?php } ?>        
+</div>
+<?php
+	require_once APPLICATION_PATH.'/includes/footer.php';
+?>

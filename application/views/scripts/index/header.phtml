@@ -1,11 +1,9 @@
 <?php
-	require_once APPLICATION_PATH.'/includes/header.php';
-	
-	$user = new UserAccount();
-	$user->populate($session->getVar('userid'));
+	include APPLICATION_PATH.'/includes/header.php';
 	
 	$thecontroller = $request->getControllerName();
 	$theaction = $request->getActionName();
+
 	$publiccontrollers = array("index", "signup","aboutus","howitworks","benefits","news","help","user","tour","forum","faqs","testimonials","billing"); 
 	if(isEmptyString($userid)){
 		$publiccontrollers[] = 'contactus';
@@ -18,15 +16,44 @@
 		$logostyle = ' style="width:auto; margin-top:25px;"';
 	}
 	
+	$ismerchant = false;
+	if(isMerchant()){ 
+		$ismerchant = true;
+		$store = $user->getMerchant()->getStore();
+	}
+	
+	$isstore = false;
+	$isstorecontroller = false;
+	$storeurl = $this->baseUrl('index');
+	if(in_array($request->getControllerName(), $storecontrollers)){ 
+		$isstorecontroller = true;
+		$store = new Store();
+		$store->findByUsername($this->store);
+		$storeurl = $store->getMerchant()->getDefaultStore();
+		if(!isEmptyString($store->getID())){ 
+			// debugMessage($store->toArray());
+			$isstore = true;
+			$storeurl = $this->baseUrl('store/'.$store->getUserName());
+			$categories = getLevelTwoCategoriesForStore($store->getID());
+		}
+	}
 ?>
 
-<div class="container makerelative">
+<div class="container makerelative automargin">
   <ul id="headerwrapper">
-  	<li style="width:22%; float:left;">
-    	<a class="brand" id="thelogo" href="<?php echo $this->baseUrl('index'); ?>"><img <?php echo $logostyle; ?> src="<?php echo $logopath; ?>" /></a>
+  	<li style="width:35%; float:left; height:100px;">
+		<?php if($ismerchant || ($isstorecontroller && $isstore)){ ?>
+            <?php if($store->isTextLogo()){ ?>
+                <a class="brand" id="txtlogo" href="<?php echo $storeurl; ?>"><?php echo $store->getName(); ?></a>
+            <?php } else { ?>
+                <a class="brand" id="imglogo" href="<?php echo $storeurl; ?>"><img <?php echo $logostyle; ?> src="<?php echo $store->getLogoPath(); ?>" /></a>
+            <?php } ?>
+        <?php } else { ?>
+            <a class="brand" id="imglogo" href="<?php echo $this->baseUrl('index'); ?>"><img <?php echo $logostyle; ?> src="<?php echo $logopath; ?>" /></a>
+        <?php } ?>
     </li>
-    <li style="width:77%; float:right; padding-top:2px;">
-    	<div class="maxwidth" style="height:40px; margin-bottom:5px;">
+    <li style="width:60%; float:right; padding-top:2px;">
+    	<div class="maxwidth blocked" style="height:40px; margin-bottom:5px;">
             	<ul class="nav maxwidth" id="headeractions">
                 	<li style="width:70%; float:left;" class="maxheight">
                     	<?php if(!isEmptyString($userid)){ ?>
@@ -36,7 +63,7 @@
                         </div>
                         <?php } ?>
                     </li>
-                    <li style="width:28%; float:right;" class="dropdown maxheight">
+                    <li style="width:28%; float:right; display:block;" class="dropdown maxheight">
 						<?php if(!isEmptyString($userid)){ ?>
                             <a style="text-align:center;" data-toggle="dropdown" id="accountdrop" class="dropdown-toggle <?php echo !in_array($thecontroller, $publiccontrollers) ? 'loggedin' : ''; ?>" href="#"><?php echo $user->getName(); ?> <b class="caret"></b></a>
                             <ul class="dropdown-menu span3">
@@ -50,7 +77,7 @@
                                 <li><a href="<?php echo $this->baseUrl("user/logout"); ?>" title="Logout">Logout</a></li>
                             </ul>
                          <?php } else { ?>
-                         	<ul class="nav pull-right" id="headeractions">
+                         	<ul class="nav pull-right" id="headeractions" style="margin-top:-10px; margin-bottom:0;">
                                 <li id="loginheader" style="float:right;">
                                     <a class="btn" style="display:inline-block; font-weight:normal; color:#000; padding:6px 10px;" id="headersignup" type="submit" href="<?php echo $this->baseUrl('signup'); ?>"><i class="icon-user"></i> Signup</a>&nbsp;
                                     <a class="btn btn-primary" style="display:inline-block; font-weight:normal; padding:6px 10px;" id="headersignin" type="submit" href="<?php echo $this->baseUrl('user/login'); ?>"><i class="icon-lock icon-white"></i> Signin</a>
@@ -61,20 +88,18 @@
                 </ul>
             <?php } ?>
         </div>
-        <div class="maxwidth" style="height:60px;" >
-        	<?php if (in_array($thecontroller, $publiccontrollers)){ ?>
-                <div class="subnavbar pull-left <?php echo !in_array($thecontroller, $publiccontrollers) ? 'loggedin' : ''; ?>" id="thenav">
-                    <?php require_once APPLICATION_PATH.'/views/scripts/index/headermenu.phtml'; ?>
-                </div>
-            <?php } else { ?>
-                <div class="subnavbar pull-left <?php echo !in_array($thecontroller, $publiccontrollers) ? 'loggedin' : ''; ?>" id="thenav">
-                    <?php require_once APPLICATION_PATH.'/views/scripts/index/headermenu.phtml'; ?>
-                </div>
-            <?php } ?>
+        <div class="maxwidth">
+        	<ul class="default linklist" style="margin-top:0; height:30px;">
+            	<?php if(isMerchant() || ($isstorecontroller && $isstore)){ ?>
+                    <li><a class="bold" href="<?php echo $store->getProfilePath(); ?>"><span>Home</span></a></li>
+                    <li><a href="<?php echo $this->baseUrl('store/watchlist/id/'.encode($store->getID())); ?>"><span>Watch List (0)</span></a></li>
+                    <li><a href="<?php echo $this->baseUrl('store/cart/id/'.encode($store->getID())); ?>"><span>Shopping Cart</span></a></li>
+                <?php } ?>
+            </ul>
         </div>
     </li>
   </ul>
-</div>
+</div>  
 <?php
 	require_once APPLICATION_PATH.'/includes/footer.php';
 ?>

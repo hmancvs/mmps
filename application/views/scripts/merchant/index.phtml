@@ -19,9 +19,9 @@
 		$request->setParam('tab', 'store');
 	}
 	
-	$title = 'My Store';
+	$title = 'Update Store';
 	if(!isMerchant()){
-		$title = "Merchant: ".$merchant->getName();
+		$title = "Update Merchant: ".$merchant->getName();
 	}
 	$this->headTitle($title);
 	
@@ -47,7 +47,7 @@ $(document).ready(function() {
 				minlength: 10,
 				validate_ug: true
 			},
-			category: "required",
+			categoryid: "required",
 			storename: "required"
 		}, 
 		// the messages for each of the fields being validated
@@ -66,7 +66,7 @@ $(document).ready(function() {
 				minlength: "Phone Number must have 10 Digits",
 				validate_ug: "<?php echo $this->translate("globale_phonenumber_format"); ?>"
 			},
-			category: "<?php echo $this->translate("merchant_category_error"); ?>",
+			categoryid: "<?php echo $this->translate("merchant_category_error"); ?>",
 			storename: "<?php echo $this->translate("merchant_storename_error"); ?>"
 		},
 		// custom error positions
@@ -137,7 +137,7 @@ $(document).ready(function() {
 <h1><?php echo $title; ?></h1>
 <?php } ?>
 <div id="tabs">
-    <?php require APPLICATION_PATH."/views/scripts/merchant/profileleftcolumn.phtml"; ?>
+    <?php require APPLICATION_PATH."/views/scripts/merchant/leftcolumn.phtml"; ?>
     <div class="span9 tab-content" id="center">   
         <div id="store">
             <form id="profileform-store" class="form-horizontal store" action="<?php echo $posturl; ?>" method="post">
@@ -146,7 +146,7 @@ $(document).ready(function() {
                 <?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
                     <div class="alert alert-success"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
                 <?php } ?>
-                <div id="store_actions" class="makeabsolute" style="top:-40px; right:0;">
+                <div id="store_actions" class="makeabsolute" style="top:-50px; right:10px;">
                     <table class="table border0 nohover margin0">                       
                        <tr>		                    
                             <td class="padding2"><button type="submit" class="btn btn-primary savethenview"><i class="icon-ok icon-white"></i> <?php echo $this->translate('global_button_save_changes'); ?></button>
@@ -165,7 +165,7 @@ $(document).ready(function() {
                                     <label class="control-label"><?php echo $this->translate("merchant_category_label"); ?>: <?php echo $this->translate("global_required_field_marker"); ?></label></label>
                                     <?php
                                         $allcats = getLevelOneCategories();
-                                        $dropdown = new Zend_Form_Element_Select('category',
+                                        $dropdown = new Zend_Form_Element_Select('categoryid',
                                                             array(
                                                                 'multiOptions' => array_merge_maintain_keys(array('' => '<Select One>'), $allcats),
                                                                 'view' => new Zend_View(),
@@ -174,9 +174,9 @@ $(document).ready(function() {
                                                                 
                                                             )
                                         );  
-                                        $dropdown->setValue($merchant->getcategory()); 
+                                        $dropdown->setValue($merchant->getcategoryid()); 
                                         echo $dropdown->render();
-                                    ?><div id="category_error"></div>
+                                    ?><div id="categoryid_error"></div>
                                 </td>
                             </tr>
                             <tr>
@@ -239,6 +239,19 @@ $(document).ready(function() {
                             </tr>  
                         </table>
                     </div>
+                    <div class="well lighter row marginleft0" style="padding-left:10px; margin-top:10px;">                        
+                        <table class="table noborder profile">                       
+                           <h3 class="well-legend margin0">Store Details</h3>
+                            <tr>
+                                <td><label class="control-label">Description<?php // echo $this->translate("merchant_store_description_label"); ?>:</label>	
+								<textarea id="description" name="description" class="expanding xhtmleditor" style="width:95%;"><?php echo $store->getdescription(); ?></textarea><div id="description_error"></div></td>
+                            </tr> 
+                            <tr>
+                                <td><label class="control-label">Tagline<?php // echo $this->translate("merchant_tagline_label"); ?>:</label>
+                                <input type="text" name="tagline" id="tagline" class="span3" value="<?php echo $store->getTagline(); ?>"  /><div id="tagline_error"></div></td>
+                            </tr> 
+                        </table>
+                    </div>
                 </span> 
                 
         	</div>
@@ -258,18 +271,18 @@ $(document).ready(function() {
                 <?php } ?>
             </form>
         </div>
-        <div id="tbd1">
-            <h2>TBD</h2>
-            <form id="profileform-personal" class="form-horizontal tbd1">
-            	<?php if($request->tab == 'tbd1'){ ?>
-                <?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
-                    <div class="alert alert-success"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
-                <?php } ?>  
+        <div id="image">
+            <h2>Images</h2>
+            <form id="profileform-image" class="form-horizontal image">
+                <?php if($request->tab == 'image'){ ?>
                 <div class="row" style="margin-left:0px;">
-                
+                	<?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
+                        <div class="alert alert-success"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
+                    <?php } ?>
+                    
                 </div>
                 <?php } ?>
-            </form>   	
+            </form>
         </div>
         <div id="account">
         	<h2>Settings</h2>

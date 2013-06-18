@@ -9,7 +9,7 @@
 	$button_title = $this->translate("profile_button_signup"); 
 	
 	// set all fields to empty string as default
-	$firstname = ''; $lastname = ''; $email = ''; $username = ''; $phone = ''; $type = 2; $agreedtoterms = ''; $id = ''; $createdby = 1; $userid = ''; $orgname = ''; $merchanttype = ''; $category = ''; $storename = ''; $url = ''; $username = '';
+	$firstname = ''; $lastname = ''; $email = ''; $username = ''; $phone = ''; $type = 2; $agreedtoterms = ''; $id = ''; $createdby = 1; $userid = ''; $orgname = ''; $merchanttype = ''; $categoryid = ''; $storename = ''; $url = ''; $username = '';
 	
 	$dobarray = array();
 	
@@ -19,7 +19,7 @@
 		// debugMessage($formvalues);
 		$firstname = $formvalues['firstname']; $lastname = $formvalues['lastname']; $email = $formvalues['email']; $username = $formvalues['username']; $userid = $formvalues['userid']; $type = $formvalues['type']; $agreedtoterms = 1; $createdby = $formvalues['createdby']; 
 		if($type == 3){
-			$orgname = $formvalues['orgname']; $merchanttype = $formvalues['merchanttype']; $category = $formvalues['category']; $storename = $formvalues['storename']; $url = $formvalues['url']; $username = $formvalues['username'];
+			$orgname = $formvalues['orgname']; $merchanttype = $formvalues['merchanttype']; $categoryid = $formvalues['categoryid']; $storename = $formvalues['storename']; $url = $formvalues['url']; $username = $formvalues['username'];
 		}
 		
 		$phone = $formvalues['phone'];
@@ -53,7 +53,7 @@
 		$type = $user->getType();
 		$merchanttype = $merchant->getType();
 		$orgname = $merchant->getOrgName();
-		$category = $merchant->getCategory();
+		$categoryid = $merchant->getCategoryID();
 		$storename = $store->getName();
 		$url = $store->getUrl();
 		
@@ -141,7 +141,7 @@
 				orgname: "required",
 				contactperson: "required",
 				merchanttype: "required",
-				category: "required",
+				categoryid: "required",
 				storename: "required",
 				username: {
 					required: true, 
@@ -188,7 +188,7 @@
 				orgname: "<?php echo $this->translate("merchant_company_error"); ?>",
 				contactperson: "<?php echo $this->translate("merchant_contact_error"); ?>",		
 				merchanttype: "<?php echo $this->translate("merchant_type_error"); ?>",
-				category: "<?php echo $this->translate("merchant_category_error"); ?>",
+				categoryid: "<?php echo $this->translate("merchant_category_error"); ?>",
 				storename: "<?php echo $this->translate("merchant_storename_error"); ?>",
 				username: {
 					required: "<?php echo $this->translate("useraccount_username_error"); ?>", 					
@@ -460,27 +460,6 @@ img.ui-datepicker-trigger {
 input.pass {
 	width:153px;
 }
-
-ul#plans {
-	list-style:none;
-	padding:0;
-	margin:0;								
-}
-ul#plans li {
-	float:left;
-	padding:10px;
-	margin:0;
-	width:230px;
-	height:auto;
-	/*border:solid 1px red;*/
-}
-.planbenefits {
-	display:block; 
-	margin:5px; 
-	padding:6px 0;
-	font-family:'calibri','Telex',sans-serif;
-	font-size:16px;
-}
 #signupform .table tbody {
 	border:none;
 }
@@ -547,7 +526,7 @@ ul#plans li {
                             <label class="control-label"><?php echo $this->translate("merchant_category_label"); ?>: <?php echo $this->translate("global_required_field_marker"); ?></label></label>
                             <?php
                                 $values = getLevelOneCategories();
-                                $dropdown = new Zend_Form_Element_Select('category',
+                                $dropdown = new Zend_Form_Element_Select('categoryid',
                                                     array(
                                                         'multiOptions' => array_merge_maintain_keys(array('' => '<Select One>'), $values),
                                                         'view' => new Zend_View(),
@@ -556,9 +535,9 @@ ul#plans li {
                                                         
                                                     )
                                 );  
-                                $dropdown->setValue($category); 
+                                $dropdown->setValue($categoryid); 
                                 echo $dropdown->render();
-                            ?><div id="category_error"></div>
+                            ?><div id="categoryid_error"></div>
                         </td>
                     </tr>
                     <tr>

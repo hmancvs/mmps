@@ -517,10 +517,8 @@ $(document).ready(function() {
                                 </tr>
                                 <tr>
                                     <td><label class="control-label">Quantity Available:</label></td>
-                                    <td><input type="text" name="quantity" id="quantity" class="isdecimal rightalign width75" value="<?php echo clean_num($product->getquantity()); ?>" /><div class="quantity_error"></div>
-                                    </td>
+                                    <td><input type="text" name="quantity" id="quantity" class="isdecimal rightalign width75" value="<?php echo clean_num($product->getquantity()); ?>" /><div class="quantity_error"></div></td>
                                 </tr>
-                                
                             </table>
                         </div>
                         <?php if(isAdmin()){ ?>

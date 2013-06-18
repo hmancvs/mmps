@@ -114,8 +114,8 @@ $(document).ready(function() {
 }
 </style>
 <div>
-	<?php require APPLICATION_PATH."/views/scripts/index/leftcolumn.phtml"; ?>
-    <div id="centercolumn">
+	<?php // require APPLICATION_PATH."/views/scripts/index/leftcolumn.phtml"; ?>
+    <div id="centercolumn" style="width:100%;">
         <form action="<?php echo $this->baseUrl("profile/listsearch"); ?>" method="get" id="listform" class="form-search">
     	<h1><?php echo $title; ?><?php echo $groupstring; ?></h1>
         <div class="wellcontent" style=" margin-top:-10px;">
@@ -157,7 +157,7 @@ $(document).ready(function() {
                                                 echo $dropdown->render();
                                             ?>
                                     </td>
-                                    <td style="width:235px; padding-left:2px; padding-right:2px;">
+                                    <td style="padding-left:2px; padding-right:2px;">
                                         <label class="control-label" style="display:block; text-align:left;">Ordering:</label>
                                         <?php
                                             $allorders = array('1' => 'Latest First', '4'=>'Earliest First', '2'=>'Alphabetical (First Name)','3'=>'Alphabetical (Last Name)');
@@ -173,10 +173,10 @@ $(document).ready(function() {
                                             echo $ordersdropdown->render();
                                         ?>
                                     </td>
-                                    <td style="padding:31px 3px 0 0; text-align:right;">
+                                    <td style="padding:31px 3px 0 0; text-align:right; width:260px;">
                                     	<div class="makerelative pull-left">
                                             <input type="hidden" name="advanced" id="advanced" value="<?php echo $request->getParam('advanced'); ?>" />
-                                            <input style="width:175px;" name="searchterm" id="searchterm" value="<?php echo $request->searchterm; ?>" type="text" class="input-medium xsearch-query span2 pull-right" placeholder="Search...">
+                                            <input style="width:200px;" name="searchterm" id="searchterm" value="<?php echo $request->searchterm; ?>" type="text" class="input-medium xsearch-query span2 pull-right" placeholder="Search...">
                                             <a style="display:block; float:right; text-align:right; position:absolute; right:5px; top:2px;" href="<?php echo $listurl; ?>" title="Reset list or clear all filters" id="reset" class="removeline close button btn" rel="email">&times;</a>
                                         </div>
                                         <div class="pull-right">

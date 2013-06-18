@@ -50,41 +50,31 @@ body.publicbody #contentwrapper {
 }
 body.publicbody #contentcolumn {
 	background:none;
+	min-height:auto;
 }
 
 </style>
 <div id="logincontainer">
 	<h1 class="calfont" style="font-weight:bold; font-size:20px; border-bottom:1px solid #bdbdbd; color:#00436D; padding:5px;">LOGIN</h1>
+	<?php if($sessionhaserror) { ?>
+    	<div class="alert alert-error clear"><?php echo $session->getVar(ERROR_MESSAGE); ?></div>
+    <?php } ?>
+    <?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
+    	<div class="alert alert-success clear"><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
+    <?php } ?>
+    <?php if(!isEmptyString($request->redirecturl)){ ?>
+    	<div style="padding:5px 5px;" class="alert alert-info clear margin0 centeralign">Please login to continue</div>
+    <?php } ?>
     <table style="width:100%; margin:0;">
     	<tr>
-            <td style="padding-left:15px; padding-top:0; vertical-align:top;">
+            <td style="padding:0;">
             	<table id="logintable">
                 	<tr>
                     	<td>
                         	<form class="form-horizontal" id="loginform" action="<?php echo $this->baseUrl('user/checklogin'); ?>" method="post">	
                                <table class="maxwidth noborder">
-                                   <?php if($sessionhaserror) { ?>
-                                   <tr>			
-                                       <td style="padding:10px 10px 0 0"><div class="alert alert-error"><?php echo $session->getVar(ERROR_MESSAGE); ?></div></td>
-                                   </tr>
-                                   <?php } ?>
-                                   <?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
-                                   <tr>			
-                                       <td><div class="alert alert-success"><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div></td>
-                                   </tr>
-                                   <?php } ?>
-                                   <?php if(!$sessionhaserror && isEmptyString($session->getVar(SUCCESS_MESSAGE))) { ?>          
-                                   <tr>			
-                                       <td>&nbsp;</td>
-                                   </tr>
-                                   <?php } ?>
-                                   <?php if(!isEmptyString($request->redirecturl)){ ?>
-                                   <tr>			
-                                       <td style="padding-top:0; padding-bottom:0; height:20px;"><div style="padding:5px 5px;" class="alert alert-info margin0 centeralign">Please login to continue</div></td>
-                                   </tr>
-                                   <?php } ?>
                                    <tr>
-                                       <td style="">
+                                       <td style="padding-top:15px;">
                                        		<label class="control-label pull-left" for="email">Email or Phone: <?php echo $this->translate("global_required_field_marker"); ?></label>
                                        		<input name="email" id="email" />
                                             <label class="pagedescription" style="font-size:11px;">e.g &nbsp; <span class="grey">jdoe@domain.com</span> or <span class="grey">0772445566</span></label>

@@ -1,0 +1,153 @@
+<?php
+	require_once APPLICATION_PATH.'/includes/header.php';
+	
+	$store = new Store();
+	$id = decode($request->getParam('id'));
+	if(!isEmptyString($id)){
+		$store->populate($id);
+		// debugMessage($product->toArray());
+	}
+	
+	$cart = $this->cart;
+	// debugMessage($cart);
+	$totalamount = 0;
+	
+	$title = 'Shopping Cart';
+	$pagetitle = $title.' | '.$store->getName();
+	$this->headTitle($pagetitle);
+	
+?>
+<script>
+$(document).ready(function(){	
+	// add item to cart
+	$('.addtocart').click(function(e){
+		e.preventDefault();
+		var carturl = '<?php echo $this->baseUrl('store/cart/id/'.encode($store->getID())); ?>';
+		var pid = $(this).attr('pid');
+		var id = $(this).attr('id');
+		var pname = $(this).attr('pname');
+		var qty = $('input.'+id).val();
+		carturl = carturl+'/pid/'+pid+'/qty/'+qty;
+		// alert(carturl);
+		window.location.href = carturl;	
+	});
+	
+	$("#resetcart").click(function(e) {
+		e.preventDefault();		
+		var message = '<label class="blockcontainer">Are you sure you want to remove all items from your Shopping Cart? <br /><br /> Click <b>OK</b> to confirm, and <b>Cancel</b> to ignore</label>';
+		var url = $(this).attr('href');
+		// alert(url);
+		resetCart(message, url);
+	});
+	$(".resetcart").click(function(e) {
+		e.preventDefault();		
+		var message = '<label class="blockcontainer">Are you sure you want to remove item from your Shopping Cart? <br /><br /> Click <b>OK</b> to confirm, and <b>Cancel</b> to ignore</label>';
+		var url = $(this).attr('href');
+		// alert(url);
+		resetCart(message, url);
+	});
+	function resetCart(message, url) {
+		bootbox.confirm(message, function(confirmed) {
+			if(confirmed){
+				window.location.href = url;					
+			} else {
+				return false;
+			}
+		});
+	}
+});
+</script>
+<style>
+#contentcolumn {
+	padding:15px 10px 15px 10px;
+	width:auto;
+}
+</style>
+<div class="row margin0">
+    <div style="width:75%; float:left;">
+        <ul class="default widget">
+            <li style="width:100%; min-height:200px;">
+                <h2><?php echo $title; ?></h2>
+                <?php if(count($cart) == 0){ ?>
+                    <div style="padding:10px 5px; margin:10px;" class="alert alert-info clear margin0 centeralign">Your shopping cart is empty! </div>
+                <?php } else { ?>
+                	<?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
+                    	<div class="alert alert-success" style="margin:5px;"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
+                    <?php } ?>
+                    <a href="<?php echo $this->baseUrl('store/cart/id/'.encode($store->getID()).'/step/reset'); ?>" title="Reset Cart" id="resetcart" class="pull-right makeabsolute" style="top:15px; right:30px;">Reset Cart</a>
+                    <table class="table nohover margin0" style="margin:0 20px 0 15px; width:95%;">
+                    	<?php
+							$i = 0;
+							foreach($cart as $key => $item){
+								$product = new Product();
+								$product->populate($key);
+								$viewurl = $this->baseUrl('store/product/id/'.encode($product->getID()));
+								$bordertop = '';
+								if($i == 0){
+									$bordertop = "border-top:none";
+								}
+								$amount = $product->getCost() * $item['qty'];
+								$totalamount += $amount;
+						?>
+                        <tr>
+                            <td style="width:100px; height:100px; padding:20px 0 0 20px; <?php echo $bordertop; ?>">
+                            	<div class="thumbinfo" style="background-color:#fff; border-color:#dddddd; width:80px;"> 
+                                    <a href="<?php echo $viewurl; ?>" title="Details" class="blocked"><img class="profileimage" style="width:100%;" src="<?php echo $product->getThumbnailPicturePath(); ?>" /></a>
+                                </div>
+                            </td>
+                            <td style="padding-top:20px; <?php echo $bordertop; ?>">
+                            	<table class="table nohover margin0 padding0 noborder" style="">
+                                	<tr>
+                                    	<td style="border-bottom:1px dotted #e1e1e1; padding-bottom:5px">
+                                        	<label class="blocked bolded font14"><?php echo $product->getName(); ?></label></td>
+                                        <td style="width:120px; border-bottom:1px dotted #e1e1e1; padding-bottom:5px">
+                                        	<label class="lineblocked font12"><?php echo formatNumber($product->getNetPrice() * $item['qty']); ?></label> Shs</td>
+                                        <td style="width:90px; border-bottom:1px dotted #e1e1e1;">
+                                        	<input type="text" name="quantity" id="quantity" class="isdecimal centeralign add_<?php echo $product->getID(); ?>" style="width:35px;" value="<?php echo $item['qty']; ?>" title="Update items in Cart" />&nbsp; 
+                                            <a class="btn lineblocked gonowhere addtocart" id="add_<?php echo $product->getID(); ?>" pid="<?php echo encode($product->getID()); ?>" pname="<?php echo $product->getName(); ?>" title="Update items in Cart" style="margin-top:-10px"><i class="icon-refresh"></i> </a>
+                                        </td>
+                                        <td style="width:100px; border-bottom:1px dotted #e1e1e1; text-align:right;">
+                                        	<label class="lineblocked font12 rightalign"><?php echo formatNumber($product->getCost() * $item['qty']); ?></label> Shs</td>
+                                    </tr>
+                                    <tr>
+                                    	<td style="">
+                                        	<div class="row margin0"><label class="lineblocked bolded font12">Code: &nbsp; </label><span class="lineblocked font12"><?php echo $product->getRefNo(); ?></span></div>
+                                            <div class="row margin0 blocked" style="height:15px;"></div>
+                                        	<a class="blocked" href="<?php echo $viewurl; ?>" title="Details">Product details</a>
+                                        </td>
+                                        <td style=""><label class="blocked bolded font12">Total Tax: &nbsp; </label><span class="lineblocked font12"><?php echo formatNumber($product->getTrxFee() * $item['qty']); ?> Shs</span></td>
+                                        <td></td>
+                                        <td><a class="rightalign pull-right resetcart" href="<?php echo $this->baseUrl('store/cart/id/'.encode($store->getID()).'/step/del/pid/'.encode($product->getID())); ?>" title="Remove item from Cart">Remove</a></td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                        <?php $i++; } ?>
+                        <tr>
+                            <td style="height:35px;">
+                            	
+                            </td>
+                            <td style="padding-top:20px;">
+                            	<label class="blocked pull-right rightalign font16">Amount Due: <span class="lineblocked font16 bolded">&nbsp;&nbsp; <?php echo formatNumber($totalamount); ?> Shs</span></label>
+                            </td>
+                        </tr>
+                    </table>
+                <?php } ?>
+                <div class="row margin0">
+                    <label class="bordered blocked rightalign" style="margin:10px 10px; padding:10px 0; height:30px; width:auto;">
+                    	<a href="<?php echo $this->baseUrl('store/products/id/'.encode($store->getID())); ?>" class="btn" style="margin-right:15px;"><i class="icon-plus"></i> Continue Shopping</a>
+                        <?php if($totalamount > 0){ ?>
+                        	<a href="<?php echo $this->baseUrl('store/checkout/id/'.encode($store->getID())); ?>" class="btn btn-primary" style="margin-right:15px;"><i class="icon-white icon-ok"></i> Pay Now</a>
+						<?php } ?>                        
+                    </label>
+                </div>
+            </li>
+        </ul>
+    </div>
+    <div style="width:23%; float:right;">
+    
+    </div>
+</div>
+<?php
+	require_once APPLICATION_PATH.'/includes/footer.php';
+?>

@@ -93,7 +93,12 @@
 	$groupstring = "";
 	
 	$paginate->processPost($request->getParams());
-	$all_results_query = "SELECT m.*, u.*, m.id as mid, u.id as uid, concat(u.firstname, ' ', u.lastname) as approver, m.type as mtype, m.status as `thestatus`, m.datecreated as mdate, m.firstname as mfirstname, m.lastname as mlastname, m.phone as mphone, m.email as memail, s.name as storename, s.username as storeusername, s.url as storeurl FROM merchant m left join useraccount as u on (m.approvedbyid = u.id) left join store s on (s.merchantid = m.id) ".$where_query." ".$paginate->getSearchAndFilterSQL()." GROUP BY m.id ".$order_query;
+	$all_results_query = "SELECT m.*, u.*, m.id as mid, u.id as uid, concat(u.firstname, ' ', u.lastname) as approver, m.type as mtype, m.status as `thestatus`, 
+		m.datecreated as mdate, m.firstname as mfirstname, m.lastname as mlastname, m.phone as mphone, m.email as memail, 
+		s.id as storeid, s.name as storename, s.username as storeusername, s.url as storeurl FROM merchant m 
+		left join useraccount as u on (m.approvedbyid = u.id) 
+		left join store s on (s.merchantid = m.id) 
+		".$where_query." ".$paginate->getSearchAndFilterSQL()." GROUP BY m.id ".$order_query;
 	
 	// debugMessage($all_results_query); // exit();
 	$paginate->setItemCountFromSQLQuery($all_results_query);
@@ -175,15 +180,16 @@ $(document).ready(function() {
 }*/
 </style>
 <div>
-	<?php require APPLICATION_PATH."/views/scripts/index/leftcolumn.phtml"; ?>
-    <div id="centercolumn">
+	<?php // require APPLICATION_PATH."/views/scripts/index/leftcolumn.phtml"; ?>
+    <div id="centercolumn" style="width:100%;">
         <form action="<?php echo $this->baseUrl("merchant/listsearch"); ?>" method="get" id="listform" class="form-search">
     	<h1><?php echo $title; ?><?php echo $groupstring; ?></h1>
         <div class="wellcontent" style=" margin-top:-10px;">
             <div class=" blocked clear" style="position:relative; margin-top:25px;">
-            	<div class="makeabsolute" style="right:5px; top:-35px;">
+            	<div class="makeabsolute" style="right:5px; top:-40px;">
                 	<?php if(isAdmin()){ ?>
-                        <a href="<?php echo $this->baseUrl('merchant/add/pgc/true'); ?>" class="addpopup addmerchant btn btn-primary btn-mini" title="New Merchant" rel="New Merchant" id="newmerchant" formtitle="indexform" successurl="<?php echo $listurl; ?>" action="<?php echo $this->baseUrl("merchant/create"); ?>"><i class="icon-plus icon-white"></i> New Merchant</a>
+                        <a href="<?php echo $this->baseUrl('merchant/list/pending/1'); ?>" class="btn btn-primary" title="Merchants For Approval"><i class="icon-list icon-white"></i> Merchants For Approval</a>
+                        <a href="<?php echo $this->baseUrl('merchant/add/pgc/true'); ?>" class="addpopup addmerchant btn btn-primary" title="New Merchant" rel="New Merchant" id="newmerchant" formtitle="indexform" successurl="<?php echo $listurl; ?>" action="<?php echo $this->baseUrl("merchant/create"); ?>"><i class="icon-plus icon-white"></i> New Merchant</a>
                    <?php } ?> 
                 </div>
                 <ul id="searchbox">
@@ -223,7 +229,7 @@ $(document).ready(function() {
                                             echo $dropdown->render();
                                         ?>
                                     </td>
-                                    <td style="width:235px; padding-left:2px; padding-right:2px;">
+                                    <td style="padding-left:2px; padding-right:2px;">
                                     	<?php if(!$forapproval){ ?>
                                            <label class="control-label" style="display:block; text-align:left;">Status:</label>
                                             <?php
@@ -241,10 +247,10 @@ $(document).ready(function() {
                                             ?>
                                         <?php } ?>
                                     </td>
-                                    <td style="padding:31px 3px 0 0; text-align:right;">
+                                    <td style="padding:31px 3px 0 0; text-align:right; width:260px; ">
                                     	<div class="makerelative pull-left">
                                             <input type="hidden" name="advanced" id="advanced" value="<?php echo $request->getParam('advanced'); ?>" />
-                                            <input style="width:175px;" name="searchterm" id="searchterm" value="<?php echo $request->searchterm; ?>" type="text" class="input-medium xsearch-query span2 pull-right" placeholder="Search Merchants">
+                                            <input style="width:200px;" name="searchterm" id="searchterm" value="<?php echo $request->searchterm; ?>" type="text" class="input-medium xsearch-query span2 pull-right" placeholder="Search Merchants">
                                             <a style="display:block; float:right; text-align:right; position:absolute; right:5px; top:2px;" href="<?php echo $listurl; ?>" title="Reset list or clear all filters" id="reset" class="removeline close button btn" rel="email">&times;</a>
                                         </div>
                                         <div class="pull-right">
@@ -317,9 +323,10 @@ $(document).ready(function() {
                                         $contact = $line['email'].'<br />'.getShortPhone($line['phone']);
                                     }
 									$merchantname = $line['mtype'] == 1 ? $line['orgname'] : $line['mfirstname'].' '.$line['mlastname'];
+									$storeid =  $line['storeid'];
 									$storename =  $line['storename'];
 									$storeusername =  $line['storeusername'];
-									$storeurl =  $line['storeurl'];
+									$storeurl = $this->serverUrl($this->baseUrl('store/'.$storeusername));
                                     // debugMessage($line['status'])
                             ?>
                                 <tr>
@@ -345,7 +352,7 @@ $(document).ready(function() {
                                     <td><?php echo isEmptyString($line['mphone']) ? '--' : getShortPhone($line['mphone']); ?></td>
                                     <td><?php echo isEmptyString($line['memail']) ? '--' : $line['memail']; ?></td>
                                     <td><?php echo isEmptyString($storename) ? '--' : $storename; ?></td>
-                                    <td><?php echo isEmptyString($storeurl) ? '--' : '<a href="javascript:doNothing();" title="'.$storename.'">'.$storeurl.'</a>'; ?></td>
+                                    <td><?php echo isEmptyString($storeurl) ? '--' : '<a href="'.$storeurl.'" title="'.$storename.'" target="_blank">'.$storeurl.'</a>'; ?></td>
                                     <td><?php echo date('d/m/Y H:i', strtotime($line['mdate'])); ?></td>
                                     <td><?php echo getMerchantApprovalStatus($line['thestatus']); ?></td>
                                     <td><?php echo isEmptyString($line['dateapproved']) ? '--' : date('d/m/Y H:i', strtotime($line['dateapproved'])); ?></td>

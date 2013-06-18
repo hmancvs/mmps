@@ -31,7 +31,7 @@ $(document).ready(function() {
 			if(controller == 'merchant' && action == 'index'){
 				var url = "<?php echo $this->baseUrl("merchant/index/id/".encode($merchant->getID())."/tab/"); ?>"+currentclass;
 			}
-			if((controller == 'merchant' && action == 'view') || currentclass == 'account'){
+			if((controller == 'merchant' && action == 'view') || currentclass == 'account' || currentclass == 'image'){
 				var url = "<?php echo $this->baseUrl("merchant/view/id/".encode($merchant->getID())."/tab/"); ?>"+currentclass;
 			}
 			if((currentclass == 'products')){
@@ -48,10 +48,16 @@ $(document).ready(function() {
 	
 }); 
 </script>
-<div class="span3 marginleft0" id="left">    
+<div class="span3 marginleft0" id="left">
+	<div class="well" id="profiletop">
+        <div id="profileinfo"> 
+			<img class="profileimage" src="<?php echo $merchant->getStore()->getLogoPath(); ?>" />
+        </div>
+    </div>    
     <ul id="leftnav" style="width:97%;">
         <li id="tab_store"><a href="#store" class="store">Store</a></li>
-        <li id="tab_account"><a href="#products" class="products">Products</a></li> 
-        <li id="tab_account"><a href="#account" class="account">Account Settings</a></li>   
+        <li id="tab_products"><a href="#products" class="products">Products</a></li>
+        <li id="tab_image"><a href="#image" class="image">Images</a></li> 
+        <li id="tab_account"><a href="#account" class="account">Store Settings</a></li>   
     </ul>
 </div>

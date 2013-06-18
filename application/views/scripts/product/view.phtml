@@ -257,11 +257,11 @@ $(document).ready(function() {
                                                         <li id='home' item-checked='true' item-expanded='true'><?php echo $product->getStore()->getMerchant()->getCategory()->getName(); ?>
                                                         	<ul>
                                                                 <?php 
-																	$level1_categories = getLevelTwoCategories($userid);
+																	$level1_categories = getLevelTwoCategoriesForStore($product->getStoreID());
 																?>
                                                                 <?php 
 																	foreach($level1_categories as $key => $value){
-																		$level2_categories = getLevelThreeCategories($userid, $key);
+																		$level2_categories = getLevelThreeCategories($product->getStoreID(), $key);
 																		$check1_result = $product->getCategoryEntry($key);
 																		if($check1_result->count() > 0){
 																			$ischeck1 = 1; 

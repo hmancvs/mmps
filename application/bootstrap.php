@@ -58,18 +58,29 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap {
 		$this->bootstrap('frontController');
 		$request = $this->getResource('frontController');
 		
-		/*$frontController  = Zend_Controller_Front::getInstance();
-		$route = new Zend_Controller_Router_Route('login', 
+		$frontController  = Zend_Controller_Front::getInstance();
+		$route = new Zend_Controller_Router_Route('store', 
 					array(
-						'controller' => 'user',
-		                'action' => 'login'
+						'controller' => 'store',
+		                'action' => 'view'
 					)
 		);
 		
        	// add this route to the front controller 
-        $frontController->getRouter()->addRoute('login', $route);
-        
-        $frontController  = Zend_Controller_Front::getInstance();
+        $frontController->getRouter()->addRoute('store', $route);
+       	
+		$frontController  = Zend_Controller_Front::getInstance();
+        $route = new Zend_Controller_Router_Route('store/:username', 
+					array(
+						'controller' => 'store',
+		                'action' => 'view',
+		                'username' => 1
+					),
+					array('store' => '\d+')
+		);
+		$frontController->getRouter()->addRoute('store', $route);
+
+        /*$frontController  = Zend_Controller_Front::getInstance();
 		$route = new Zend_Controller_Router_Route('logout', 
 					array(
 						'controller' => 'user',

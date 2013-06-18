@@ -708,28 +708,92 @@
 	}
 	# check for level one categories
 	function getLevelOneCategories($value = ''){
-		$query = "SELECT c.id as optionvalue, c.name as optiontext FROM category c order by optiontext ";
+		$query = "SELECT c.id as optionvalue, c.name as optiontext FROM category c where c.level = 1 order by optiontext ";
 		$array = getOptionValuesFromDatabaseQuery($query);
 		if(!isEmptyString($value)){
 			return $array[$value];
 		}
 		return $array;
 	}
-	# check for level two categories
-	function getLevelTwoCategories($userid ){
+	# check for level two categories by userid 
+	function getLevelTwoCategories($userid){
 		$conn = Doctrine_Manager::connection(); 
 		$query = "SELECT c.id as optionvalue, c.name as optiontext FROM category c where c.createdby = '".$userid."' AND c.level = 2 order by optiontext ";
 		// $array = $conn->fetchAll($query);
 		$array = getOptionValuesFromDatabaseQuery($query);
 		return $array;
 	}
-	# check for level three categories
-	function getLevelThreeCategories($userid, $catid){
+	# check for level two categories by username 
+	function getLevelTwoCategoriesForStore($storeid){
 		$conn = Doctrine_Manager::connection(); 
-		$query = "SELECT c.id as optionvalue, c.name as optiontext FROM category c where c.createdby = '".$userid."' AND c.parentid = '".$catid."' AND c.level = 3 order by optiontext ";
+		$query = "SELECT c.id as optionvalue, c.name as optiontext FROM category c inner join store s on (c.storeid = s.id) where c.storeid = ".$storeid." and c.level = 2 order by optiontext ";
+		// $array = $conn->fetchAll($query);
+		$array = getOptionValuesFromDatabaseQuery($query);
+		return $array;
+	}
+	# check for level three categories
+	function getLevelThreeCategories($storeid, $catid){
+		$conn = Doctrine_Manager::connection();
+		$query = "SELECT c.id as optionvalue, c.name as optiontext FROM category c inner join store s on (c.storeid = s.id) WHERE c.storeid = ".$storeid." AND c.parentid = '".$catid."' AND c.level = 3 order by optiontext ";
 		// $array = $conn->fetchAll($query);
 		// debugMessage($array);
 		$array = getOptionValuesFromDatabaseQuery($query);
+		return $array;
+	}
+	# whether to display logo image or text
+	function getLogoDisplayStatus($value = '', $checkvalue = false){
+		$array = array(1=>'Use Image', 2=>'Use Store Name');
+		if(isEmptyString($value) && $checkvalue){
+			return $array[1];
+		}
+		if(!isEmptyString($value)){
+			if($value == 0){
+				return $array[1];
+			}
+			return $array[$value];
+		}
+		return $array;
+	}
+	# the current theme used in the store
+	function getStoreThemeStatus($value = '', $checkvalue = false){
+		$array = array(1=>'Default');
+		if(isEmptyString($value) && $checkvalue){
+			return $array[1];
+		}
+		if(!isEmptyString($value)){
+			if($value == 0){
+				return $array[1];
+			}
+			return $array[$value];
+		}
+		return $array;
+	} 
+	# whether to display products or categories in navigation
+	function getStoreMenuStatus($value = '', $checkvalue = false){
+		$array = array(1=>'Use Categories', 2=>'Use Products');
+		if(isEmptyString($value) && $checkvalue){
+			return $array[1];
+		}
+		if(!isEmptyString($value)){
+			if($value == 0){
+				return $array[1];
+			}
+			return $array[$value];
+		}
+		return $array;
+	}
+	# whether to display products or categories in navigation
+	function getStoreLandingStatus($value = '', $checkvalue = false){
+		$array = array(1=>'Use Store Cover Image', 2=>'Use Store Featured Product');
+		if(isEmptyString($value) && $checkvalue){
+			return $array[1];
+		}
+		if(!isEmptyString($value)){
+			if($value == 0){
+				return $array[1];
+			}
+			return $array[$value];
+		}
 		return $array;
 	}
 ?>

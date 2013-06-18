@@ -18,7 +18,7 @@ class Merchant extends BaseEntity  {
 		$this->hasColumn('email', 'string', 50, array('notnull' => true, 'notblank' => true));
 		$this->hasColumn('phone', 'string', 15, array('notnull' => true, 'notblank' => true));
 		$this->hasColumn('phone2', 'string', 15);
-		$this->hasColumn('status', 'integer', null, array('default' => '0')); # 0=Created, 1=Approved, 2=Rejected
+		$this->hasColumn('status', 'integer', null, array('default' => 0)); # 0=Created, 1=Approved, 2=Rejected
 		$this->hasColumn('dateapproved', 'date');
 		$this->hasColumn('approvedbyid', 'integer', null);
 		# override the not null and not blank properties for the createdby column in the BaseEntity
@@ -144,7 +144,12 @@ class Merchant extends BaseEntity  {
 		$thestore[0]['name'] = $formvalues['storename'];
 		$thestore[0]['username'] = $formvalues['username'];
 		$thestore[0]['url'] = $formvalues['url'];
-		
+		if(!isArrayKeyAnEmptyString('description', $formvalues)){
+			$thestore[0]['description'] = $formvalues['description'];
+		}
+		if(!isArrayKeyAnEmptyString('tagline', $formvalues)){
+			$thestore[0]['tagline'] = $formvalues['tagline'];
+		}
 		if(count($thestore) > 0){
 			$formvalues['stores'] = $thestore;
 		}
@@ -168,7 +173,7 @@ class Merchant extends BaseEntity  {
 			}
 		}
 		// check if to create user
-		// debugMessage($formvalues); // exit();
+		debugMessage($formvalues); // exit();
 		parent::processPost($formvalues);
 	}
 	
@@ -199,14 +204,14 @@ class Merchant extends BaseEntity  {
 		# validate unique username and email
 		$id_check = "";
 		if(!isEmptyString($this->getID())){
-			$id_check = " AND id <> '".$this->getID()."' ";
+			$id_check = " AND id <> '".$this->getAdmin()->getID()."' ";
 		}
 		
 		if(isEmptyString($email)){
 			$email = $this->getEmail();
 		}
 		$query = "SELECT id FROM useraccount WHERE email = '".$email."' AND email <> '' ".$id_check;
-		// debugMessage($ref_query);
+		// debugMessage($query);
 		$result = $conn->fetchOne($query);
 		// debugMessage($ref_result);
 		if(isEmptyString($result)){
@@ -334,10 +339,12 @@ class Merchant extends BaseEntity  {
 	}
 	# function to determine the user's profile path
 	function getProfilePath() {
-		$url = '';
+		$url = $this->getDefaultStore();
 		$store = $this->getStores()->get(0);
-		if(!isEmptyString($store->getID())){
-			$url = $store->getUrl();
+		$storeid = $store->getID();
+		if(!isEmptyString($storeid)){
+			$view = new Zend_View();
+			return $view->serverUrl($view->baseUrl('store/'.$store->getUserName()));
 		}
 		return $url;
 	}

@@ -169,7 +169,7 @@ class Product extends BaseEntity  {
 				}
 			}
 			// category price
-			if($formvalues['tab'] == 'prices'){
+			if($formvalues['tab'] == 'prices' || !isArrayKeyAnEmptyString('popupadd', $formvalues)){
 				if(isArrayKeyAnEmptyString('quantity', $formvalues)){
 					$formvalues['quantity'] = NULL; 
 				}
@@ -331,7 +331,7 @@ class Product extends BaseEntity  {
 	}
 	# determine if product is downloadable
 	function isDownloadable(){
-		return $this->getType()==2 ? true : false;
+		return $this->getType() == 2 ? true : false;
 	}
 }
 ?>

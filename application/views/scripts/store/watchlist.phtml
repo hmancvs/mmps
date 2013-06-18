@@ -1,0 +1,36 @@
+<?php
+	require_once APPLICATION_PATH.'/includes/header.php';
+	
+	$product = new Product();
+	$store = new Store();
+	$id = decode($request->getParam('id'));
+	if(!isEmptyString($id)){
+		$store->populate($id);
+		// debugMessage($product->toArray());
+	}
+	
+	$title = 'Watch List';
+	$pagetitle = $title.' | '.$store->getName();
+	$this->headTitle($pagetitle);
+	
+?>
+<script>
+$(document).ready(function(){	
+	
+});
+</script>
+<style>
+#contentcolumn {
+	padding:15px 10px 15px 10px;
+	width:auto;
+}
+</style>
+<div class="row margin0">
+	<h1><?php echo $title; ?></h1>
+    <div class="row margin0" style="margin-top:5px;">
+        
+    </div>
+</div>
+<?php
+	require_once APPLICATION_PATH.'/includes/footer.php';
+?>

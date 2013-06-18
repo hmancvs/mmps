@@ -6,6 +6,11 @@ $sessionhaserror = !isEmptyString($session->getVar(ERROR_MESSAGE));
 $userid = $session->getVar("userid");  
 $type = $session->getVar("type");
 
+$user = new UserAccount();
+$user->populate($session->getVar('userid'));
+
+$storecontrollers = array('store', 'storecategory');
+	
 # the request object instance
 $request = Zend_Controller_Front::getInstance()->getRequest();
 

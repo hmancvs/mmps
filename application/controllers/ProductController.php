@@ -56,7 +56,7 @@ class ProductController extends SecureController  {
 	    $formvalues = $this->_getAllParams();
 	    $step = $formvalues['step'];
 	    
-	    debugMessage($formvalues); 
+	    // debugMessage($formvalues); 
 		$product = new Product();
 		$product->populate(decode($this->_getParam('id')));
 		// debugMessage($product->toArray()); 

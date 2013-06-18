@@ -1,200 +1,116 @@
 <?php
-	require_once APPLICATION_PATH.'/includes/header.php';
+	include APPLICATION_PATH.'/includes/header.php';
 	
+	$thecontroller = $request->getControllerName();
+	$theaction = $request->getActionName();
+
+	$publiccontrollers = array("index", "signup","aboutus","howitworks","benefits","news","help","user","tour","forum","faqs","testimonials","billing"); 
+	if(isEmptyString($userid)){
+		$publiccontrollers[] = 'contactus';
+	}
+	
+	$isstore = false;
+	$isstorecontroller = false;
+	if(in_array($request->getControllerName(), $storecontrollers)){ 
+		$isstorecontroller = true;
+		$store = new Store();
+		$store->findByUsername($this->store);
+		$storeurl = $store->getMerchant()->getDefaultStore();
+		if(!isEmptyString($store->getID())){ 
+			// debugMessage($store->toArray());
+			$isstore = true;
+			$storeurl = $this->baseUrl('store/'.$store->getUserName());
+			$categories = getLevelTwoCategoriesForStore($store->getID());
+		}
+	}
 ?>
 <ul class="mainnav" id="middlebar">
-    <?php if(isEmptyString($session->getVar('userid'))){ ?>
-        <li id="home" class="<?php echo ($request->getControllerName() == 'index') ? 'active' : ''; ?>">
-            <a href="<?php echo $this->baseUrl('index'); ?>"><span>Home</span></a>	
-        </li>
-    <?php } else { ?>
-        <li id="home" class="<?php echo ($request->getControllerName() == 'dashboard') ? 'active' : ''; ?>">
-            <a href="<?php echo $this->baseUrl('dashboard'); ?>"><span>Dashboard</span></a>	
-        </li>
-    <?php } ?>
-    <?php if(!$isInnerPage){ ?>
-        <li id="link1" class=""><a href="#"><span>Link 1</span></a></li>	
-        <li id="link2" class=""><a href="#"><span>Link 2</span></a></li>
-        <li id="link3" class=""><a href="#"><span>Link 3</span></a></li>
-        <li id="link4" class=""><a href="#"><span>Link 4</span></a></li>
-        <li id="link5" class=""><a href="#"><span>Link 5</span></a></li>
-        <li id="link6" class=""><a href="#"><span>Link 6</span></a></li>
-    <?php } ?>
-    <?php if(!isEmptyString($session->getVar('userid')) && $isInnerPage){ ?>
-        <?php if(isMerchant()){ ?>
-        <li id="store" class="<?php echo (($request->getControllerName() == 'store')) ? 'active' : ''; ?>">
-            <a href="<?php echo $this->baseUrl('merchant/view/id/'.encode($user->getMerchantID())); ?>"><span>My Store</span></a>	
-        </li>
-        <?php } ?>
-        <?php if(isSubscriber() || isMerchant()){ ?>
-        <li id="profile" class="<?php echo (($request->getControllerName() == 'profile'  && $request->getActionName() != 'list') || $request->getControllerName() == 'profile') ? 'active' : ''; ?>">
-            <a href="<?php echo $this->baseUrl('profile/view/id/'.encode($session->getVar('userid'))); ?>"><span>My Profile</span></a>	
-        </li>
-        <?php } ?>
-    <?php } ?>    
-</ul>
-
-<style>
-.subnavbar {
-    margin: 0;
-	padding:0;
-}
-.subnavbar-inner {
-	height: 50px;
-	background:none;
-	background:url('../images/menubg.png') top left repeat-x;
-}
-ul.mainnav {
-    display: inline-block;
-    height: 50px;
-    margin: 0;
-	margin-left:0;
-    padding: 0;
-	width:115%;
-}
-ul.mainnav li > a {
-	color:#fff;
-	font-weight:bold;
-	font-family:'calibri','Telex',sans-serif;
-    display: block;
-    font-size: 18px;
-    font-weight: normal;
-    height: auto;
-    /*padding: 10px 14px 12px 14px;*/
-	padding: 10px 22px 10px 22px;
-    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.2);
-}
-ul.mainnav > li {
-    float: left;
-    height: 50px;
-    list-style: none outside none;
-    margin: 0;	
-    padding: 0;
-    text-align: center;
-	vertical-align:middle;
-	position:relative;
-}
-.loggedin ul.mainnav {
-	height:auto;
-	position:relative;
-	margin-right:0;
-	float:left;
-	margin: 0;
-}
-.loggedin ul.mainnav > li {
-	height:auto;
-	width:auto;
-}
-.loggedin ul.mainnav > li > a {
-	color:#f9f9f9;
-	padding: 10px 22px 10px 22px;
-	/*padding: 10px 10px 10px 10px;*/
-	font-size:18px;
-	white-space:nowrap;
-	width:auto;	
-}
-ul.mainnav li > a span {
-    display: inline-block;
-}
-ul.mainnav li:hover a, ul.mainnav li.active a  {
-	color:#fff;   
-	background-color:#585858 ;
-	border:solid 2px #787878;
-	/*padding: 8px 12px 10px 12px;*/
-	padding: 8px 20px 10px 20px;
-	-webkit-border-radius: 3px;
-	-moz-border-radius: 3px;
-	border-radius: 3px;
-	background-image: -webkit-gradient(linear, left top, left bottom, from(#808080), to(#585858));
-	background-image: -moz-linear-gradient(top, #808080, #585858);
-	background-image: linear-gradient(#808080, #585858);
-	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr=#808080, endColorstr=#585858);
-	-ms-filter: "progid:DXImageTransform.Microsoft.gradient(startColorstr=#808080, endColorstr=#585858)";
-	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#808080', endColorstr='#585858', GradientType=0);
-}
-.loggedin ul.mainnav > li:hover > a, .loggedin ul.mainnav > li.active > a {
-	padding: 8px 20px 10px 20px;
-	/*padding: 8px 8px 10px 8px;*/
-	-webkit-border-bottom-right-radius: 0;
-	-webkit-border-bottom-left-radius: 0;
-	-moz-border-bottom-right-radius: 3px;
-	-moz-border-bottom-left-radius: 0;
-	border-bottom-right-radius: 0;
-	border-bottom-left-radius: 0;
-	border-bottom:solid 2px #00263b;
-}
-<?php if($islinux){ ?>
-ul.mainnav li > a {
-	font-size:15px;
-}
-.loggedin ul.mainnav > li > a {
-	font-size:15px;
-}
+<?php if(isEmptyString($session->getVar('userid')) && !$isstore){ ?>
+	<li class="<?php echo ($request->getControllerName() == 'index') ? 'active' : ''; ?>">
+		<a href="<?php echo $this->baseUrl('index'); ?>"><span>Home</span></a>	
+	</li>
+    <li class=""><a><span>All Products</span></a></li>	
+    <li class=""><a><span>Categories</span></a></li>	
 <?php } ?>
-#accountdrop.loggedin {
-	background-color: #f5f5f5;
-	background-image: -moz-linear-gradient(top, #ffffff, #e6e6e6);
-	background-image: -ms-linear-gradient(top, #ffffff, #e6e6e6);
-	background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#ffffff), to(#e6e6e6));
-	background-image: -webkit-linear-gradient(top, #ffffff, #e6e6e6);
-	background-image: -o-linear-gradient(top, #ffffff, #e6e6e6);
-	background-image: linear-gradient(top, #ffffff, #e6e6e6);
-	background-repeat: repeat-x;
-	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffff', endColorstr='#e6e6e6', GradientType=0);
-	border-color: #e6e6e6 #e6e6e6 #bfbfbf;
-	border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
-	filter: progid:dximagetransform.microsoft.gradient(enabled=false);
-	border: 1px solid #cccccc;
-	border-bottom-color: #b3b3b3;
-	-webkit-border-radius: 4px;
-	-moz-border-radius: 4px;
-	border-radius: 4px;
-	-webkit-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);
-	-moz-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);
-	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);
-	padding:5px 12px 5px 12px;
-	color:#666666;
-}
-#accountdrop.loggedin .caret {
-	border-bottom-color: #000000;
-    border-top-color: #000000;
-}
-ul.mainnav ul.submenu  {
-	width:98%;
-	border:10px solid #292929;
-	opacity:1;
-	margin-top:-35px;
-	display:none;
-}
-ul.mainnav ul.submenu.dropdown-menu, #myaccountlist {
-	-webkit-border-radius: 6px;
-  	-moz-border-radius: 6px;
-  	border-radius: 6px;
-	border-top-left-radius:0;
-	border-top-right-radius:0;	
-	display:none;
-	position:absolute;
-	z-index:90;
-	margin:0;
-	top:50px;
-	left:0;
-}
-ul.mainnav ul.submenu li {
-	color:#3a66c2;
-	width:97%;
-	display:block;
-	margin:3px;
-}
-ul.mainnav ul.submenu li a {
-	color:#317EAC ;
-	text-align:left;
-	font-weight:normal;
-	padding:2px;
-	padding-left:10px;
-	font-size:12px;
-}
-ul.mainnav ul.submenu li:hover  {
-	background-color:#016799;
-}
+<?php if(!isEmptyString($session->getVar('userid')) && !$isstore){ ?>
+	<li class="<?php echo ($request->getControllerName() == 'dashboard') ? 'active' : ''; ?>">
+		<a href="<?php echo $this->baseUrl('dashboard'); ?>"><span>Dashboard</span></a>	
+	</li>
+<?php } ?>
 
-</style>
+<?php if(!isEmptyString($session->getVar('userid')) && !$isstore){ ?>
+	<?php if(isMerchant()){ 
+		$store = $user->getMerchant()->getStore();
+	?>
+		<li class="<?php echo (($request->getControllerName() == 'product')) ? 'active' : ''; ?>">
+			<a href="<?php echo $this->baseUrl('product/list'); ?>"><span>Products</span></a>	
+		</li>
+		<li class="<?php echo (($request->getControllerName() == 'order')) ? 'active' : ''; ?>">
+			<a><span>Customer Orders</span></a>	
+		</li>
+		<li class="<?php echo (($request->getControllerName() == 'payment')) ? 'active' : ''; ?>">
+			<a><span>Payments</span></a>	
+		</li>
+		<li class="<?php echo (($request->getControllerName() == 'store')) ? 'active' : ''; ?>">
+			<a href="<?php echo $this->baseUrl('merchant/view/id/'.encode($user->getMerchantID())); ?>"><span>Store Profile</span></a>	
+		</li>
+		<li class="">
+			<a href="<?php echo $store->getProfilePath(); ?>" target="_blank" title="Go to Shopping Front" ><span>Store Front</span></a>	
+		</li>
+	<?php } ?>
+	<?php if(isSubscriber()){ ?>
+		<li class="<?php echo (($request->getControllerName() == 'profile'  && $request->getActionName() != 'list') || $request->getControllerName() == 'profile') ? 'active' : ''; ?>">
+			<a href="<?php echo $this->baseUrl('profile/view/id/'.encode($session->getVar('userid'))); ?>"><span>My Profile</span></a>	
+		</li>
+	<?php } ?>
+	<?php if(isAdmin()){ ?>
+		<li class="<?php echo (($request->getControllerName() == 'merchant')) ? 'active' : ''; ?>">
+			<a href="<?php echo $this->baseUrl('merchant/list'); ?>"><span>Merchants</span></a>	
+		</li>
+		<li class="<?php echo (($request->getControllerName() == 'profile')) ? 'active' : ''; ?>">
+			<a href="<?php echo $this->baseUrl('profile/list'); ?>"><span>Users</span></a>	
+		</li>
+		<li class="<?php echo (($request->getControllerName() == 'product')) ? 'active' : ''; ?>">
+			<a href="<?php echo $this->baseUrl('product/list'); ?>"><span>Products</span></a>	
+		</li>
+		<li class="<?php echo (($request->getControllerName() == 'payment')) ? 'active' : ''; ?>">
+			<a><span>Payments</span></a>	
+		</li>
+		<li class="<?php echo (($request->getControllerName() == 'appconfig')) ? 'active' : ''; ?>">
+			<a><span>System Config</span></a>	
+		</li>
+	<?php } ?>
+<?php } ?>
+<?php if($isstorecontroller && $isstore){ ?>    
+    <li class=""><a href="<?php echo $storeurl; ?>"><span><?php echo $store->isTextLogo() ? 'Home' : $store->getName(); ?></span></a></li>
+    <?php if($isstore){ ?>
+         <?php if($store->isProdductMenu()){ 
+                $products = $store->getProducts();
+            ?>
+            <li class=""><a href="<?php echo $this->baseUrl('store/products/id/'.encode($store->getID())); ?>"><span>All Products</span></a></li>	    	
+            <?php if($products->count() > 0){ ?>
+                <?php foreach($products as $product){ ?>
+                    <li id="prod_<?php echo $product->getID(); ?>" class=""><a href="<?php echo $this->baseUrl('store/product/id/'.encode($product->getID())); ?>"><span><?php echo $product->getName(); ?></span></a></li>	
+                <?php } ?>
+            <?php } ?>
+        <?php } else { ?>  
+            <?php    
+                $categories = getLevelTwoCategoriesForStore($store->getID());
+             ?>
+             <li class=""><a href="<?php echo $this->baseUrl('store/products/id/'.encode($store->getID())); ?>"><span>All Products</span></a></li>	    	
+             <?php if(count($categories) > 0){ ?>
+                <?php foreach($categories as $key => $value){ 
+                        $category = new Category();
+                        $category->populate($key);
+                        $alias = $category->getAlias();
+                        if(isEmptyString($alias)){ 
+                            $alias = strtolower($value);
+                        }
+                ?>
+                    <li id="cat_<?php echo $key; ?>" class=""><a href="<?php echo $this->baseUrl('storecategory/view/cat/'.$alias.'/id/'.encode($key)); ?>"><span><?php echo $value; ?></span></a></li>	
+                <?php } ?>
+             <?php } ?>
+        <?php } ?>    
+    <?php } ?>
+<?php } ?>    
+</ul>

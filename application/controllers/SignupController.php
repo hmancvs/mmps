@@ -37,7 +37,7 @@ class SignupController extends IndexController   {
 			$thestore[0]['url'] = $formvalues['url'];
 			
 			$post['merchant']['type'] = $formvalues['merchanttype'];
-			$post['merchant']['category'] = $formvalues['category'];
+			$post['merchant']['categoryid'] = $formvalues['categoryid'];
 			if($formvalues['merchanttype'] == 1){
 				$post['merchant']['contactperson'] = $firstname.' '.$lastname;
 				$post['merchant']['orgname'] = $formvalues['orgname'];
@@ -57,8 +57,8 @@ class SignupController extends IndexController   {
 		$this->_setParam('usergroups_groupid', $post['usergroups_groupid']);
 		$this->_setParam('merchant', $post['merchant']);
 		
-		// debugMessage($this->_getAllParams());
-		// exit();
+		/*debugMessage($this->_getAllParams());
+		exit();*/
 		parent::createAction();
 	}
 	

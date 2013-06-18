@@ -14,6 +14,7 @@ class Category extends BaseEntity {
 		
 		$this->hasColumn('name', 'string', 255, array('notnull' => true, 'notblank' => true));
 		$this->hasColumn('description', 'string', 500);
+		$this->hasColumn('alias', 'string', 255);
 		$this->hasColumn('parentid', 'integer', null); 
 		$this->hasColumn('storeid', 'integer', null); 
 		$this->hasColumn('type', 'integer', null, array('default' => 2)); 
@@ -176,6 +177,40 @@ class Category extends BaseEntity {
 	# find duplicates after save
 	function getDuplicates(){
 		$q = Doctrine_Query::create()->from('Category c')->where("c.type = '".$this->getType()."' AND c.name = '".$this->getName()."' AND c.parentid = '".$this->getParentID()."' AND c.createdby = '".$this->getCreatedBy()."' AND c.id <> '".$this->getID()."' ");
+		
+		$result = $q->execute();
+		return $result;
+	}
+	# determine breadcrumb for category
+	function getBreadCrumb(){
+		$breadcrumb = '';
+		switch ($this->getLevel()){
+			case 2:
+				$parentname = $this->getParent()->getName().' > ';
+				break;
+			case 3:
+				$parentname = $this->getParent()->getName().' > ';
+				break;
+			default:
+				break; 
+		}
+		return $breadcrumb;
+	}
+	# determine if category is level 1
+	function isLevel1(){
+		return $this->getLevel() == 1 ? true : false;
+	}
+	# determine if category is level 2
+	function isLevel2(){
+		return $this->getLevel() == 2 ? true : false;
+	}
+	# determine if category is level 3
+	function isLevel3(){
+		return $this->getLevel() == 3 ? true : false;
+	}
+	# get products in a store category
+	function getStoreProducts($storeid = ''){
+		$q = Doctrine_Query::create()->from('Product p')->innerJoin('p.categories pc')->where("pc.categoryid = '".$this->getID()."'");
 		
 		$result = $q->execute();
 		return $result;

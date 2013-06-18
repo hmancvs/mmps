@@ -1,0 +1,166 @@
+<?php
+	require_once APPLICATION_PATH.'/includes/header.php';
+	
+	$product = new Product();
+	$id = decode($request->getParam('id'));
+	if(!isEmptyString($id)){
+		$product->populate($id);
+		// debugMessage($product->toArray());
+		$store = $product->getStore();
+	}
+	
+	$title = $product->getName();
+	$pagetitle = $product->getName().' | '.$store->getName();
+	$this->headTitle($pagetitle);
+	
+?>
+<script>
+$(document).ready(function(){	
+	// add item to cart
+	$('#addtocart').click(function(e){
+		e.preventDefault();
+		var carturl = '<?php echo $this->baseUrl('store/cart/id/'.encode($store->getID()).'/pid/'.encode($product->getID())); ?>';
+		var qty = $('#quantity').val();
+		carturl = carturl+'/qty/'+qty;
+		// alert(carturl);
+		window.location.href = carturl;	
+	});
+});
+</script>
+<style>
+#contentcolumn {
+	padding:15px 10px 15px 10px;
+	width:auto;
+}
+</style>
+<div class="row margin0">
+	<h1><?php echo $title; ?></h1>
+    <div class="row margin0" style="margin-top:5px;">
+        <div id="prod_left" style="width:280px; float:left; margin-right:10px; height:400px; border:1px solid #e2e2e2; padding-top:10px;">
+        	<div class="imagecontainer shadowround" style="width:90%; margin-left:10px;">
+            	<a class="gonowhere blocked" href="<?php // echo $viewurl; ?>" title="Details"><img class="profileimage" style="width:100%;" src="<?php echo $product->getMediumPicturePath(); ?>" /></a>
+            </div>
+        </div>
+        <div id="prod_right" class="makerelative" style="width:65%; float:right; margin-right:10px;">
+        	<a href="<?php echo $this->baseUrl('store/products/id/'.encode($store->getID())); ?>" class="btn btn-primary makeabsolute" style="top:-40px; right:2px;"><i class="icon-white icon-list"></i> All Products</a>
+        	<table class="table nohover margin0">
+    			<tr>
+                	<td>
+                    	<?php 
+							$categories = $product->getcategories();
+							$categories_array = array();
+							foreach($categories as $category){
+								$categories_array[] = $category->getCategory()->getName();
+							}
+							// debugMessage($categories_array);
+							
+						?>
+                        <table class="table margin0 padding0 border0 nohover">
+                        	<tr>
+                            	<td style="width:100px;"><label class="bolded lineblocked font12">Category(s)</label>:&nbsp;</td>
+                                <td><?php echo count($categories_array) == 0 ? '--' : implode(', ',$categories_array); ?></td> 
+                            </tr>
+                            <tr>
+                            	<td><label class="bolded lineblocked font12">Product Code</label>:&nbsp;</td>
+                                <td><?php echo isEmptyString($product->getRefNo()) ? '--' : $product->getRefNo(); ?></td> 
+                            </tr>
+                            <tr>
+                            	<td><label class="bolded lineblocked font12">Manufacturer</label>:&nbsp;</td>
+                                <td><?php echo isEmptyString($product->getManufacturer()) ? '--' : $product->getManufacturer(); ?></td> 
+                            </tr>
+                            <tr>
+                            	<td><label class="bolded lineblocked font12">Status</label>:&nbsp;</td>
+                                <td> Available </td> 
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                	<td style="padding-top:20px;">
+                    	<table class="table margin0 padding0 border0 nohover">
+                        	<tr>
+                            	<td style="width:100px;"><label class="lineblocked font12">Net Price </label> (Ugx):</td>
+                                <td><?php echo isEmptyString($product->getnetprice()) ? '--' : formatNumber($product->getnetprice()); ?></td> 
+                            </tr>
+                            <tr>
+                            	<td><label class="lineblocked font12">Tax Fees</label> (Ugx):</td>
+                                <td><?php echo isEmptyString($product->getTrxFee()) ? '--' : formatNumber($product->getTrxFee()); ?></td> 
+                            </tr>
+                            <tr>
+                            	<td><label class="bolded lineblocked font16">Cost</label> (Ugx):</td>
+                                <td><label class="bolded lineblocked font16"><?php echo isEmptyString($product->getCost()) ? '--' : formatNumber($product->getCost()); ?></label></td> 
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                	<td style="padding-top:10px;">
+                    	<table class="table margin0 padding2 border0 nohover">
+                        	<tr>
+                            	<td style="width:70px;"><label class="bolded lineblocked font12">Quantity: </label></td>
+                                <td style="width:100px;"><input type="text" name="quantity" id="quantity" class="isdecimal centeralign width75" value="1" /></td>
+                                <td style="width:130px;"><a id="addtocart" class="btn btn-primary gonowhere" title="Add to Cart"><i class="icon-white icon-plus"></i> Add to Cart</a></td>
+                                <td> - OR - &nbsp;&nbsp; <a href="<?php echo $this->baseUrl('store/watchlist/id/'.encode($store->getID()).'/pid/'.encode($product->getID())); ?>" title="Add to Watch List" class="centeralign">Add to Watch List</a></td> 
+                            </tr>
+                            <tr>
+                            	<td colspan="4"><div class="quantity_error"></div></td>
+                            </tr>
+                        </table>
+                        
+                    </td>
+                </tr>
+                <tr>
+                	<td style="padding-top:30px; height:100px; border-bottom:1px #999999 dashed;">
+                    	<table class="table table-bordered ">
+                        	<tr>
+                            	<td>Rating</td>
+                            </tr>
+                            <tr>
+                            	<td><img src="<?php echo $this->baseUrl('images/stars-0.png'); ?>" />&nbsp;&nbsp; 0 Reviews</td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>    
+        </div>
+    </div>
+    <div class="row margin0" style="margin-top:5px;">
+    	<div id="prod2_left" style="">
+        
+        </div>
+        <div id="prod2_right" class="testbordder" style="width:65%; float:right; margin-right:10px; min-height:200px; border-bottom:1px #999999 dashed;">
+        	<table class="table border0 nohover">
+            	<tr>
+                	<td><label class="bolded blocked font14">Description: </label>
+                    	<span class="blocked" style="padding:10px; line-height:20px;"><?php echo isEmptyString($product->getDescription()) ? '--' : $product->getDescription(); ?></span>
+                    </td>
+                </tr>
+                <tr>
+                	<td><label class="bolded blocked font14">Features: </label>
+                    	<ul class="default" style="margin-top:5px; margin-left:15px;"> 
+                        	<?php 
+								$prodetails = $product->getAllAttributes();
+								$nooflines = $prodetails->count();
+								if($nooflines > 0){
+									foreach($prodetails as $attribute){
+									
+							?>
+                                <li style="display:block; width:95%; padding:2px 15px;">
+                                	<span style="display:block; position:absolute; width:5px; height:5px; top:10px; left:0; background-color:#666666;"></span>
+                                    <label class="bolded lineblocked font12" style=""><?php echo $attribute->getField(); ?>:</label>
+                                    <label class="lineblocked" style="margin-left: 2px;"><?php echo $attribute->getValue(); ?></label>
+                                </li>
+								<?php } ?>
+                            <?php } else { ?>
+                            	<li style="padding:10px;">--</li>
+                            <?php } ?>
+                        </ul>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
+<?php
+	require_once APPLICATION_PATH.'/includes/footer.php';
+?>

@@ -11,7 +11,7 @@
 		$request->setParam('tab', 'store');
 	}
 	
-	$title = 'My Store';
+	$title = $merchant->getName();
 	if(!isMerchant()){
 		$title = "Merchant: ".$merchant->getName();
 	}
@@ -22,7 +22,20 @@
 <script>
 $(document).ready(function() {
 	
-	
+	$('.updatesetting:not(:checked)').click(function(){
+		var newvalue = $(this).val();
+		var field = $(this).attr('theid');
+		var storeid = '<?php echo $merchant->getStore()->getID(); ?>';
+		var successurl = '<?php echo encode($this->baseUrl('merchant/view/id/'.encode($merchant->getID())).'/tab/account'); ?>';
+		// alert(current);alert(field);
+		bootbox.confirm('<label class="blockcontainer">Are you sure you want to change this setting? <br /><br />Click <b>OK</b> to confirm, and <b>Cancel</b> to ignore</label>', function(confirmed) {
+			if(confirmed){
+				window.location.href = "<?php echo $this->baseUrl('merchant/settings'); ?>/storeid/"+storeid+"/value/"+newvalue+"/field/"+field+"/successurl/"+successurl;
+			} else {
+				return false;
+			}
+		});
+	});
 }); 
 </script>
 <style>
@@ -32,16 +45,19 @@ $(document).ready(function() {
 <h1><?php echo $title; ?></h1>
 <?php } ?>
 <div id="tabs">
-    <?php require APPLICATION_PATH."/views/scripts/merchant/profileleftcolumn.phtml"; ?>
-    <div class="span9 tab-content" id="center">   
+    <?php require APPLICATION_PATH."/views/scripts/merchant/leftcolumn.phtml"; ?>
+    <div class="span9 tab-content" id="center">  
+    	<?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
+        	<div class="alert alert-success"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
+        <?php } ?>	
+        <?php if($sessionhaserror) { ?>
+        	<div class="alert alert-error"><?php echo $session->getVar(ERROR_MESSAGE); ?></div>
+        <?php } ?> 
         <div id="store">
             <form id="profileform-store" class="form-horizontal store">
             <?php if($request->tab == 'store'){ ?>
         	<div class="row makerelative" style="margin-left:0px;">
-                <?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
-                    <div class="alert alert-success"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
-                <?php } ?>
-                <div id="store_actions" class="makeabsolute" style="top:-40px; right:0;">
+                <div id="store_actions" class="makeabsolute" style="top:-50px; right:0;">
                     <table class="table border0 nohover margin0">                       
                        <tr>		                    
                             <td class="padding2"><a class="btn btn-primary" href="<?php echo $this->baseUrl('merchant/index/id/'.encode($id)); ?>" id="update"><i class="icon-pencil icon-white"></i> Update</a> &nbsp;
@@ -62,14 +78,14 @@ $(document).ready(function() {
                         <table class="table noborder profile">                       
 							<tr>
                                 <td style="width:45%;"><label class="control-label"><?php echo $this->translate("merchant_type_label"); ?>:</label><?php echo getMerchantType($merchant->getType()); ?></td>
-                                <td><label class="control-label"><?php echo $this->translate("merchant_category_label"); ?>:</label><?php echo getLevelOneCategories($merchant->getcategory()); ?></td>
+                                <td><label class="control-label"><?php echo $this->translate("merchant_category_label"); ?>:</label><?php echo getLevelOneCategories($merchant->getcategoryID()); ?></td>
                             </tr>
                             <tr>
                                 <td><label class="control-label"><?php echo $this->translate("merchant_storename_label"); ?>:</label><?php echo $store->getName(); ?></td>
                                 <td><label class="control-label"><?php echo $this->translate("merchant_storeusername_label"); ?>:</label><?php echo $store->getUserName(); ?></td>
                             </tr>
                             <tr>
-                                <td><label class="control-label"><?php echo $this->translate("merchant_storeurl_label"); ?>:</label><?php echo $store->getUrl(); ?></td>
+                                <td><label class="control-label"><?php echo $this->translate("merchant_storeurl_label"); ?>:</label><a href="<?php echo $store->getStoreUrl(); ?>" target="_blank" title="Store Front"><?php echo $store->getStoreUrl(); ?></a></td>
                                 <td></td>
                             </tr>
                         </table>
@@ -107,6 +123,20 @@ $(document).ready(function() {
                             </tr> 
                         </table>
                     </div>
+                    <div class="well lighter row marginleft0" style="padding-left:10px; margin-top:10px;">                        
+                        <table class="table noborder profile">                       
+                           <h3 class="well-legend margin0">Store Details</h3>
+                            <tr>
+                                <td colspan="2">
+                                <label class="control-label">Description<?php // echo $this->translate("merchant_phone_label"); ?>:</label>	
+								<?php echo isEmptyString($store->getDescription()) ? 'Store description goes here' : $store->getDescription(); ?></td>
+                            </tr> 
+                            <tr>
+                                <td style="width:15%;"><label class="control-label">Tagline<?php // echo $this->translate("merchant_phone_label"); ?>:</label></td>
+                                <td><?php echo isEmptyString($store->getTagline()) ? '--' : $store->getTagline(); ?></td>
+                            </tr> 
+                        </table>
+                    </div>
                 </span> 
         	</div>
             <?php } ?>
@@ -122,6 +152,241 @@ $(document).ready(function() {
                     <?php } ?>
                     
                 </div>
+                <?php } ?>
+            </form>
+        </div>
+        <div id="image">
+            <h2>
+            	<a href="<?php echo $this->baseUrl('merchant/view/id/'.encode($merchant->getID()).'/tab/image'); ?>" title="All Images">Images</a>
+                <?php if($request->imgaction == 'upload'){ ?>
+                	<?php if($request->type == 1){ ?>
+                    > Upload Logo
+                    <?php } ?>
+                    <?php if($request->type == 2){ ?>
+                    > Upload Cover
+                    <?php } ?>
+                <?php } ?>
+            </h2>
+            <form id="profileform-image" class="form-horizontal image" method="post" enctype="multipart/form-data" action="<?php echo $this->baseUrl('merchant/picture'); ?>">
+                <?php if($request->tab == 'image'){ ?>
+                    <span class="span6 margin0" style="width:98%;">
+                        <div class="well lighter row margin0" style="padding-left:10px; background-color:#fff;"> 
+                            <?php if(isEmptyString($request->imgaction)){ ?>
+                            <table class="table table-stripped table-bordered hasheader nohover" style="margin-bottom:10px;">
+                                <thead>
+                                    <tr class="rowheader">
+                                        <td>Logo Image</td>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><div class="row makerelative margin0 maxwidth clear">
+                                                <div id="profileinfo" class="pull-left"> 
+                                                    <img class="profileimage" src="<?php echo $merchant->getStore()->getLogoPath(); ?>" alt="Update Logo" />
+                                                </div>
+                                                <div class="makeabsolute" style="top:5px; right:20px;">
+                                                    <table class="table border0 nohover margin0">                       
+                                                       <tr>		                    
+                                                            <?php if(isAdmin() || isMerchant()){ ?>
+                                                                <td class="padding2"><a class="btn btn-primary" href="<?php echo $this->baseUrl('merchant/view/id/'.encode($id).'/tab/image/imgaction/upload/type/1'); ?>" id="update"><i class="icon-upload icon-white"></i> Upload</a></td>
+                                                            <?php } ?>
+                                                       </tr>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>               
+                            </table>
+                            <table class="table table-stripped table-bordered hasheader nohover" style="margin-top:15px;">
+                                <thead>
+                                    <tr class="rowheader">
+                                        <td>Store Cover Image</td>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                	 <tr>
+                                        <td><div class="row makerelative margin0 maxwidth clear">
+                                                <div> 
+                                                    <img class="imagecontainer" src="<?php echo $merchant->getStore()->getCoverPath(); ?>" alt="Update Logo" style="width:565px;" />
+                                                </div>
+                                                <div class="makeabsolute" style="top:5px; right:20px;">
+                                                    <table class="table border0 nohover margin0">                       
+                                                       <tr>		                    
+                                                            <?php if(isAdmin() || isMerchant()){ ?>
+                                                                <td class="padding2"><a class="btn btn-primary" href="<?php echo $this->baseUrl('merchant/view/id/'.encode($id).'/tab/image/imgaction/upload/type/2'); ?>" id="update"><i class="icon-upload icon-white"></i> Upload</a></td>
+                                                            <?php } ?>
+                                                       </tr>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <?php }  ?>
+                            <?php if($request->imgaction == 'upload'){ 
+									$type = $request->type;
+							?>
+                            	<script type="text/javascript" src="<?php echo $this->baseUrl('javascript/custom/5.jquery.imgareaselect.min.js') ?>"></script>
+                            	<script>
+									$(document).ready(function() {
+										
+										<?php if(isEmptyString($request->crop)){ ?>
+											// form validation
+											$("#profileform-image").validate({		
+												// define the validation rules one field at a time
+												rules: {
+													profileimage: "required"
+												}, 
+												// the messages for each of the fields being validated
+												messages: {		
+													profileimage: "Please browse for image on computer<?php //echo $this->translate("person_firstname_error"); ?>"
+												},
+												// custom error positions
+												errorPlacement: function(error, element) {
+													switch(element.attr("name")){					
+														default:
+															error.appendTo("#"+element.attr("name")+"_error")
+															break;
+													}			
+												}
+											});
+										<?php } ?>
+										
+										<?php if(!isEmptyString($request->crop)){ ?>
+											<?php if($request->type == 1){ ?>
+												$('#photo').imgAreaSelect({ 
+													aspectRatio: '15:7', 
+													handles: true,
+													fadeSpeed: 200, 
+													minWidth: 150,
+													maxWidth: 300,
+													x1: 75, y1: 50, x2: 225, y2: 120,
+													/*onSelectChange: preview,*/
+													onSelectEnd: function (img, selection) {
+														$('input[name="x1"]').val(selection.x1);
+														$('input[name="y1"]').val(selection.y1);
+														$('input[name="x2"]').val(selection.x2);
+														$('input[name="y2"]').val(selection.y2);
+														$('input[name="h"]').val(selection.height);
+														$('input[name="w"]').val(selection.width);            
+													}
+												});
+											<?php } ?>
+											<?php if($request->type == 2){ ?>
+												$('#photo').imgAreaSelect({ 
+													aspectRatio: '5:2', 
+													handles: true,
+													fadeSpeed: 200, 
+													minWidth: 150,
+													maxWidth: 450,
+													x1: 0, y1: 0, x2: 450, y2: 180,
+													/*onSelectChange: preview,*/
+													onSelectEnd: function (img, selection) {
+														$('input[name="x1"]').val(selection.x1);
+														$('input[name="y1"]').val(selection.y1);
+														$('input[name="x2"]').val(selection.x2);
+														$('input[name="y2"]').val(selection.y2);
+														$('input[name="h"]').val(selection.height);
+														$('input[name="w"]').val(selection.width);            
+													}
+												});
+											<?php } ?>	
+										<?php } ?>
+										
+										
+										
+									}); 
+									</script>
+                            	<table class="table noborder margin0 nohover">
+                                    <tr>
+                                        <td style="vertical-align:top; width:20%; padding-left:0; padding-right:15px;">
+                                            <table class="table noborder margin0 nohover">
+                                                <tr>
+                                                    <td>
+                                                    	<?php if($type == 1){ ?>
+                                                            <h3 class="well-legend">Current Logo</h3>
+                                                            <div id="profileinfo" style="margin-top:15px;">
+                                                                <img id="xprofileimage" src="<?php echo $merchant->getStore()->getLogoPath(); ?>" />
+                                                            </div>
+                                                        <?php } ?>
+                                                        <?php if($type == 2){ ?>
+                                                            <h3 class="well-legend">Current Cover</h3>
+                                                            <div>
+                                                                <img class="imagecontainer" style="width:170px;" src="<?php echo $merchant->getStore()->getCoverPath(); ?>" />
+                                                            </div>
+                                                        <?php } ?>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td style="vertical-align:top;">
+                                        	<input type="hidden" id="id" name="id" value="<?php echo encode($merchant->getStore()->getID()); ?>" />
+                                        	<input type="hidden" class="successurl" id="<?php echo URL_SUCCESS; ?>" name="<?php echo URL_SUCCESS; ?>" value="<?php echo encode($this->baseUrl('merchant/view/id/'.encode($merchant->getID()).'/tab/image')); ?>" />
+                                            <input type="hidden" id="type" name="type" value="<?php echo $type; ?>" />
+                                            <input type="hidden" class="cropurl" id="cropurl" name="cropurl" value="<?php echo encode($this->baseUrl('merchant/view/id/'.encode($merchant->getID()).'/tab/image/imgaction/upload/crop/1/type/'.$type)); ?>" />
+                                            <input type="hidden" class="failureurl" id="failureurl" name="failureurl>" value="<?php echo encode($this->baseUrl('merchant/view/id/'.encode($id).'/tab/image/imgaction/upload/type/'.$type)); ?>" />
+                                            <?php if(isEmptyString($request->crop)){ ?>
+                                                <table class="table noborder margin0">
+                                                    <tr>
+                                                        <td style="vertical-align:top; border-bottom:2px dotted #e2e2e2; padding-bottom:50px;">
+                                                            <h3 class="well-legend">Upload new Image</h3>
+                                                            <label style="display:block; margin-top:5px;">You can upload a JPG or PNG file (Max size 2MB)</label>
+                                                            <input class="file" type="file" name="profileimage" id="profileimage" />
+                                                            
+                                                            <input type="hidden" id="step" name="step" value="upload" />
+                                                            <div id="profileimage_error"></div>
+                                                        </td>
+                                                    </tr>  
+                                                    <tr>
+                                                        <td style="padding-top:25px;"><button style="" type="submit" class="btn btn-primary" id="upload" name="submit" title="Upload"><i class="icon-upload icon-white"></i>&nbsp; Upload</button> or <a href="<?php echo $this->baseUrl('merchant/view/id/'.encode($merchant->getID()).'/tab/image'); ?>" title="<?php echo $this->translate("global_button_cancel"); ?>"><?php echo $this->translate('global_button_cancel'); ?></a>&nbsp;
+                                                        </td>
+                                                    </tr>       
+                                                </table>
+                                            <?php } else { ?>
+                                                <div class="makerelative">
+                                                    <button style="float:right; display:inline-block; top:-10px; right:75px;" type="submit" id="startcrop" class="btn btn-primary btn-large makeabsolute">Crop Image</button>
+                                                </div>
+                                                <table class="table noborder margin0">
+                                                    <tr>
+                                                        <td style="vertical-align:top; border-bottom:2px dotted #e2e2e2; padding-bottom:30px;">
+                                                            <h3 class="well-legend">Resize/Crop Image</h3>
+                                                            <label style="margin:15px; margin-left:-2px; display:block; font-size:13px; font-style:normal;" class="pagedescription">Drag the handles on the image canvas below to resize and click <b>'Crop Image'</b> to save changes.</label>
+                                                            <?php if($type == 1){ ?>
+                                                                <img src="<?php echo $merchant->getStore()->getLargeLogoPath(); ?>" id="photo" />
+                                                                <input type="hidden" name="x1" value="75" />
+                                                                <input type="hidden" name="y1" value="50" />
+                                                                <input type="hidden" name="x2" value="225" />
+                                                                <input type="hidden" name="y2" value="120" />
+                                                                <input type='hidden' name='w' value='150' />
+                                                                <input type='hidden' name='h' value='70' />
+                                                                <input type="hidden" id="step" name="step" value="crop" />
+                                                            <?php } ?>
+                                                            <?php if($type == 2){ ?>
+                                                                <img src="<?php echo $merchant->getStore()->getLargeCoverPath(); ?>" id="photo" />
+                                                                <input type="hidden" name="x1" value="0" />
+                                                                <input type="hidden" name="y1" value="0" />
+                                                                <input type="hidden" name="x2" value="450" />
+                                                                <input type="hidden" name="y2" value="180" />
+                                                                <input type='hidden' name='w' value='450' />
+                                                                <input type='hidden' name='h' value='180' />
+                                                                <input type="hidden" id="step" name="step" value="crop" />
+                                                            <?php } ?>
+                                                       </td>
+                                                    </tr>  
+                                                    <tr>
+                                                        <td>
+                                                        </td>
+                                                    </tr>       
+                                                </table>
+                                            <?php } ?>
+                                        </td>
+                                    </tr>
+                                </table>
+                            <?php } ?>
+                        </div>
+                    </span>
                 <?php } ?>
             </form>
         </div>
@@ -153,6 +418,99 @@ $(document).ready(function() {
                                         <?php echo isEmptyString($merchant->getDateCreated()) ? '--' : date('d/m/Y H:i', strtotime($merchant->getDateCreated())); ?></td>
                                     <td><label class="control-label"><?php echo $this->translate("merchant_addedby_label"); ?>:</label>
                                         <?php echo $merchant->getCreator()->getName(); ?>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="well lighter row marginleft0" style="padding-left:10px; margin-top:10px;">                        
+                            <table class="table noborder profile">                       
+                               <h3 class="well-legend margin0">Store Settings</h3>
+                               <tr>
+                                    <td style="width:20%;"><label class="control-label"><?php echo $this->translate("merchant_logostatus_label"); ?>:</label></td>
+                                    <td><?php
+											 $values = getLogoDisplayStatus(); 						  
+											 $radio = new Zend_Form_Element_Radio('logotype',
+													  array(
+															  'multiOptions' => $values, 
+															  'view' => new Zend_View(),
+															  'disableLoadDefaultDecorators' => true,
+															  'separator' => '&nbsp;&nbsp;&nbsp;&nbsp;',
+															  'class' => array('updatesetting'),
+															  'theid' => 'logotype',
+															  'decorators' => array('ViewHelper',
+																				  array('HtmlTag', array('tag' => 'div', 'class' => array('inline', 'radio', 'zendradio'))) // use a sorrounding DIV with classes which are copied to the label by JQuery
+																			  )
+													  )
+											  );
+											  $radio->setValue($merchant->getStore()->getlogotype());
+											  echo $radio->render();
+										  ?>
+                                    </td>
+                                </tr> 
+                                <tr>
+                                    <td><label class="control-label"><?php echo $this->translate("merchant_theme_label"); ?>:</label></td>
+                                    <td><?php
+											 $values = getStoreThemeStatus(); 						  
+											 $radio = new Zend_Form_Element_Radio('theme',
+													  array(
+															  'multiOptions' => $values, 
+															  'view' => new Zend_View(),
+															  'disableLoadDefaultDecorators' => true,
+															  'separator' => '&nbsp;&nbsp;&nbsp;&nbsp;',
+															  'class' => array('updatesetting'),
+															  'theid' => 'theme',
+															  'decorators' => array('ViewHelper',
+																				  array('HtmlTag', array('tag' => 'div', 'class' => array('inline', 'radio', 'zendradio'))) // use a sorrounding DIV with classes which are copied to the label by JQuery
+																			  )
+													  )
+											  );
+											  $radio->setValue($merchant->getStore()->gettheme());
+											  echo $radio->render();
+										  ?>
+                                    </td>
+                                </tr> 
+                                <tr>
+                                    <td><label class="control-label"><?php echo $this->translate("merchant_navconfig_label"); ?>:</label></td>
+                                    <td><?php
+											 $values = getStoreMenuStatus(); 						  
+											 $radio = new Zend_Form_Element_Radio('menuconfig',
+													  array(
+															  'multiOptions' => $values, 
+															  'view' => new Zend_View(),
+															  'disableLoadDefaultDecorators' => true,
+															  'separator' => '&nbsp;&nbsp;&nbsp;&nbsp;',
+															  'class' => array('updatesetting'),
+															  'theid' => 'menuconfig',
+															  'decorators' => array('ViewHelper',
+																				  array('HtmlTag', array('tag' => 'div', 'class' => array('inline', 'radio', 'zendradio'))) // use a sorrounding DIV with classes which are copied to the label by JQuery
+																			  )
+													  )
+											  );
+											  $radio->setValue($merchant->getStore()->getmenuconfig());
+											  echo $radio->render();
+										  ?>
+									</td>
+                                </tr>
+                                <tr>
+                                    <td><label class="control-label"><?php echo $this->translate("merchant_landingconfig_label"); ?>:</label></td>
+                                    <td><?php
+											 $values = getStoreLandingStatus(); 						  
+											 $radio = new Zend_Form_Element_Radio('frontconfig',
+													  array(
+															  'multiOptions' => $values, 
+															  'view' => new Zend_View(),
+															  'disableLoadDefaultDecorators' => true,
+															  'separator' => '&nbsp;&nbsp;&nbsp;&nbsp;',
+															  'class' => array('updatesetting'),
+															  'theid' => 'frontconfig',
+															  'decorators' => array('ViewHelper',
+																				  array('HtmlTag', array('tag' => 'div', 'class' => array('inline', 'radio', 'zendradio'))) // use a sorrounding DIV with classes which are copied to the label by JQuery
+																			  )
+													  )
+											  );
+											  $radio->setValue($merchant->getStore()->getfrontconfig());
+											  echo $radio->render();
+										  ?>
                                     </td>
                                 </tr>
                             </table>

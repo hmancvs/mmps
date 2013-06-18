@@ -46,6 +46,20 @@
 			}
 		});
 		
+		$('#cost').keyup(function(){
+			var cost = $(this).val();
+			var rate = $('#trxrate').val();
+			var computedtrxfee = IsValidAmount(cost) ? (rate/100)*cost : 0;
+			var computedtrxfee_round = Math.round(computedtrxfee)
+			var netprice = cost - computedtrxfee_round;
+			// alert(computedrate);
+			$("#trxfee_display").html(addCommas(computedtrxfee_round));
+			$("#trxfee").val(computedtrxfee_round);
+			$("#netprice_display").html(addCommas(netprice));
+			$("#netprice").val(netprice);
+		});
+		$('#cost').trigger('keyup');
+		
 	}); 
 </script>
 <style>
@@ -60,6 +74,7 @@ body {
     <input type="hidden" name="<?php echo SUCCESS_MESSAGE; ?>" value="global_save_success" />
     <input type="hidden" name="<?php echo URL_SUCCESS; ?>" value="<?php echo encode($this->baseUrl('index/addsuccess')); ?>" />
     <input type="hidden" name="<?php echo URL_FAILURE; ?>" value="<?php echo encode($this->baseUrl('index/adderror')); ?>" />
+    <input type="hidden" name="popupadd" value="1" />
     <table class="table">
 		<?php if($sessionhaserror) { ?>
 	        <tr>
@@ -93,9 +108,18 @@ body {
             <td><label class="control-label"><?php echo $this->translate("product_refno_label"); ?>: <?php echo $this->translate("global_required_field_marker"); ?></label></td>
         	<td><input type="text" name="refno" id="refno" class="span3" value="" /><div id="refno_error"></div></td>
         </tr>
-         <tr>
-            <td><label class="control-label">Cost<?php // echo $this->translate("product_price_label"); ?>: <?php echo $this->translate("global_required_field_marker"); ?></label></td>
-        	<td><input type="text" name="cost" id="cost" class="span2" value="" /><div id="cost_error"></div></td>
+        <tr>
+            <td><label class="control-label">Cost (Ugx): <?php echo $this->translate("global_required_field_marker"); ?></label></td>
+        	<td><input type="text" name="cost" id="cost" class="width75" value="" />&nbsp;&nbsp; &nbsp;&nbsp; 
+            	<label class="control-label lineblocked autowidth" style="width:auto;">Tax Fees (Ugx):</label> &nbsp;
+                <label id="trxfee_display" class="bolded isdecimal width75 lineblocked">0</label>
+                <input type="hidden" name="trxfee" id="trxfee" value="" />
+                <input type="hidden" name="trxrate" id="trxrate" value="5" />
+                <div id="cost_error"></div></td>
+        </tr>
+        <tr>
+            <td><label class="control-label">Net Price (Ugx):</label><span class="pagedescription rightalign lineblocked"><a>after 5% tax fees</a></span></td>
+        	<td><label id="netprice_display" class="bolded isdecimal width75 lineblocked">0</label><input type="hidden" name="netprice" id="netprice" value="" /></td>
         </tr>
         <?php if(isAdmin()){ ?>
         <tr>

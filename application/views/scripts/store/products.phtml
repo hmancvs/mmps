@@ -1,0 +1,77 @@
+<?php
+	require_once APPLICATION_PATH.'/includes/header.php';
+	
+	$store = new Store();
+	
+	$store = new Store();
+	$id = decode($request->getParam('id'));
+	if(!isEmptyString($id)){
+		$store->populate($id);
+		// debugMessage($product->toArray());
+	}
+	
+	$title = "All Products";
+	$pagetitle = $title.' | '.$store->getName();
+	$this->headTitle($pagetitle);
+	
+?>
+
+<style>
+#contentcolumn {
+	padding:15px 10px 15px 10px;
+	width:auto;
+}
+</style>
+<div>
+    <div style="width:100%; float:left;">
+        <ul class="default widget">
+            <li style="width:100%; min-height:200px;">
+                <h2><?php echo $title; ?></h2>
+                <?php if(!isEmptyString($session->getVar(SUCCESS_MESSAGE)) ){ ?>
+                    <div class="alert alert-success" style="margin:5px;"><a class="close" data-dismiss="alert">×</a><?php echo $session->getVar(SUCCESS_MESSAGE); ?></div>
+                <?php } ?>
+                <table class="table nohover margin0 border0" style="margin:0 20px 0 15px; width:95%;">
+                    <tr>
+                        <td>
+                            <?php 
+                                $products = $store->getProducts();
+                            ?>
+                            <?php if($products->count() == 0){ ?>
+                                <div style="padding:10px 5px;" class="alert alert-info clear margin0 centeralign">There are no items to list</b></div>
+                            <?php } else { ?>
+                                <ul class="default" style="margin-top:5px; margin-bottom:10px; margin-left:10px;">
+                                    <?php 
+                                        foreach($products as $product){
+                                            // $product = $productline->getProduct();
+                                            $viewurl = $this->baseUrl('store/product/id/'.encode($product->getID()));
+                                    ?>
+                                        <li class="imagecontainer nobg" style="width:160px; height:180px; margin-right:15px; padding:10px; border-color:#E1E0E0;">
+                                            <label class="blocked maxwidth bolded centeralign" style="font-size:12px;"><a href="<?php echo $viewurl; ?>" title="Details"><?php echo $product->getName(); ?></a></label>
+                                            <div class="thumbinfo" style="background-color:#fff; border-color:#dddddd; margin-left:45px;"> 
+                                                <a href="<?php echo $viewurl; ?>" title="Details" class="blocked"><img class="profileimage" src="<?php echo $product->getThumbnailPicturePath(); ?>" /></a>
+                                            </div>
+                                            <table class="table margin0 padding2 nohover nobg" style="margin-left:30px; width:auto;">
+                                                <tr>
+                                                    <td class="centeralign"><span class="blocked bolded"><?php echo formatNumber($product->getCost()); ?> shs</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="centeralign"><a href="<?php echo $this->baseUrl('store/cart/id/'.encode($store->getID()).'/pid/'.encode($product->getID())); ?>" title="Add to Cart" class="btn btn-primary btn-mini"><i class="icon-white icon-plus"></i> Add to Cart</a></td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="centeralign"><a href="<?php echo $this->baseUrl('store/watchlist/id/'.encode($store->getID()).'/pid/'.encode($product->getID())); ?>" title="Add to Watch List" class="centeralign">Add to Watch List</a></td>
+                                                </tr>
+                                            </table>
+                                        </li>
+                                    <?php } ?>
+                                </ul>
+                            <?php } ?>
+                        </td>
+                    </tr>
+                </table>
+            </li>
+        </ul>
+    </div>
+</div>
+<?php
+	require_once APPLICATION_PATH.'/includes/footer.php';
+?>
